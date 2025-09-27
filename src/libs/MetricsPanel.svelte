@@ -147,6 +147,7 @@
     
     errorMessage = ""
     isLoading = true
+    isLoadingMetrics = true // 设置加载标志位，防止循环调用
     
     try {
       pluginInstance.logger.info(`开始加载文档 ${currentDocId} 的指标数据`)
@@ -256,8 +257,13 @@
       if (currentDocId === docId) {
         isLoading = false
       }
+      // 无论如何都要重置加载标志位
+      isLoadingMetrics = false
     }
   }
+
+  // 防止在加载期间触发无限循环的标志位
+  let isLoadingMetrics = false;
 
   // 计算总体优先级
   function calculatePriority() {
@@ -281,8 +287,11 @@
       setPriorityInput(totalPriority)
     }
     
-    // 通知父组件优先级已更新
-    dispatch("priorityChange", { priority: totalPriority })
+    // 只有在非加载状态下才通知父组件，避免无限循环
+    if (!isLoadingMetrics) {
+      // 通知父组件优先级已更新
+      dispatch("priorityChange", { priority: totalPriority })
+    }
   }
 
   // 直接更新指标值 (供输入框使用)

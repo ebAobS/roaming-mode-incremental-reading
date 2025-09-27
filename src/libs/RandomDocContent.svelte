@@ -44,13 +44,16 @@
   import IncrementalReviewer from "../service/IncrementalReviewer"
   import MetricsPanel from "./MetricsPanel.svelte"
   import PriorityBarChart from "./PriorityBarChart.svelte"
+  import MobileFloatingActions from "./MobileFloatingActions.svelte"
+  import LockToggleButton from "./components/LockToggleButton.svelte"
+  import LockableContentArea from "./components/LockableContentArea.svelte"
+  import { setLocked } from "../stores/lockStore"
   import { isContentEmpty } from "../utils/utils"
   import { icons } from "../utils/svg"
   import { showSettingMenu } from "../topbar"
   import type { DocPriorityData } from "../models/IncrementalConfig"
   import type { DocBasicInfo } from "../models/IncrementalConfig"
   import type { Metric } from "../models/IncrementalConfig"
-  import { isLocked, toggleLock, setLocked } from "../stores/lockStore"
 
   // props
   export let pluginInstance: RandomDocPlugin
@@ -73,6 +76,7 @@
   // SQL筛选相关变量
   let sqlQuery = ""
   let showSqlHelp = false
+  let showSqlDialog = false
   
   // 根文档选择器相关变量 - 混合输入模式
   let isDocsLoading = false
@@ -106,6 +110,11 @@
   let editableContent = "";
   let isEditing = false;
   let saveTimeout: any = null;
+  
+  // 计算锁定状态下的只读内容
+  $: lockedContent = editableContent.replace(/contenteditable="true"/g, 'contenteditable="false"').replace(/contenteditable='true'/g, 'contenteditable="false"')
+
+
 
   // 新增：已访问文档列表弹窗相关
   let showVisitedDialog = false
@@ -373,6 +382,15 @@
   export const doIncrementalRandomDoc = async () => {
     // 每次漫游前强制刷新配置，确保概率配置为最新
     storeConfig = await pluginInstance.safeLoad(storeName)
+    
+    // 🎯 关键修复：SQL筛选模式下如果没有SQL查询语句，不执行漫游
+    if (storeConfig.filterMode === FilterMode.SQL && (!storeConfig.sqlQuery || storeConfig.sqlQuery.trim() === '')) {
+      content = "请输入SQL查询语句"
+      tips = "输入查询条件后，点击「应用筛选」按钮开始漫游"
+      isLoading = false
+      return
+    }
+    
     isLoading = true
     title = "漫游中..."
     content = ""
@@ -385,11 +403,10 @@
     docMetrics = []
 
     try {
-      // 检查渐进复习器是否已初始化
-      if (!pr) {
-        pr = new IncrementalReviewer(storeConfig, pluginInstance)
-        await pr.initIncrementalConfig()
-      }
+      // 🎯 关键修复：每次漫游都重新创建IncrementalReviewer实例，确保使用最新配置
+      // 这样可以确保筛选条件的实时更新，修复用户报告的筛选条件不生效问题
+      pr = new IncrementalReviewer(storeConfig, pluginInstance)
+      await pr.initIncrementalConfig()
       
       // 获取文档总数
       let total
@@ -416,7 +433,7 @@
 
       // 获取随机文档
       try {
-        result = await pr.getRandomDoc()
+        result = await pr.getRandomDoc(storeConfig)
         let newDocId, isAbsolutePriority = false
         if (typeof result === 'object' && result !== null && 'docId' in result) {
           newDocId = result.docId
@@ -590,7 +607,7 @@
       }
       
       // 获取已访问文档数量
-      const visitedCount = await pr.getVisitedCount()
+      const visitedCount = await pr.getVisitedCount(storeConfig)
       const remainingCount = total - visitedCount
       
       // 优先级顺序漫游提示
@@ -598,7 +615,7 @@
       if (typeof result === 'object' && result.isAbsolutePriority) {
         let rankText = "未知"
         try {
-          const priorityList = await pr.getPriorityList()
+          const priorityList = await pr.getPriorityList(storeConfig)
           const rank = priorityList.findIndex(doc => doc.id === currentRndId)
           if (rank !== -1) {
             rankText = (rank + 1).toString()
@@ -850,7 +867,7 @@
       await pr.initIncrementalConfig()
     }
     // 获取已访问文档及其上次漫游时间
-    const docs = await pr.getVisitedDocs()
+    const docs = await pr.getVisitedDocs(storeConfig)
     // 并发获取每个文档的上次漫游时间
     visitedDocs = await Promise.all(docs.map(async doc => {
       const lastTime = await pr.getRoamingLastTime(doc.id)
@@ -885,6 +902,35 @@
       doc: { id: docId }
     })
   }
+
+  // 处理浮窗关闭操作
+  function handleFloatingClose() {
+    try {
+      // 关闭渐进阅读模式
+      if (pluginInstance.isMobile && pluginInstance.fullscreenContainer) {
+        // 移动端全屏模式
+        pluginInstance.fullscreenContainer.remove()
+        
+        // 清理组件实例
+        if (pluginInstance.tabContentInstance) {
+          pluginInstance.tabContentInstance.$destroy()
+          pluginInstance.tabContentInstance = null
+        }
+        
+        // 清理引用
+        pluginInstance.fullscreenContainer = null
+        
+        pluginInstance.logger.info("移动端渐进阅读已关闭")
+      } else if (pluginInstance.tabInstance) {
+        // 桌面端标签页模式
+        pluginInstance.tabInstance.close()
+        pluginInstance.tabInstance = null
+      }
+    } catch (error) {
+      pluginInstance.logger.error("关闭渐进阅读失败:", error)
+    }
+  }
+
 
   // 新增：格式化文档ID为日期（如需更复杂格式可后续完善）
   function formatDocIdToDate(docId: string): string {
@@ -932,7 +978,7 @@
         if (!Array.isArray(res.data) || res.data.length === 0) break
       }
       // 获取已访问文档ID集合
-      const visitedDocs = await pr.getVisitedDocs()
+      const visitedDocs = await pr.getVisitedDocs(storeConfig)
       const visitedSet = new Set(visitedDocs.map(d => d.id))
       // 批量获取文档优先级属性
       const docIds = allDocs.map(doc => doc.id)
@@ -1020,12 +1066,18 @@
   async function refreshPriorityBarPoints() {
     if (!pr) return;
     
+    // 如果正在刷新中，避免重复调用
+    if (isRefreshingPriority) {
+      console.warn("refreshPriorityBarPoints: 正在刷新中，跳过重复调用");
+      return;
+    }
+    
     // 保存当前文档的优先级（如果存在），以便在刷新后能够恢复
     currentDocPriority = priorityBarPoints.find(p => p.id === currentRndId)?.priority;
     
     try {
       // 使用新的getPriorityList方法获取所有文档的优先级
-      const latestPriorityList = await pr.getPriorityList();
+      const latestPriorityList = await pr.getPriorityList(storeConfig);
       
       // 如果存在currentRndId但列表中不存在，则可能是新文档，需要添加到列表中
       if (currentRndId && !latestPriorityList.some(p => p.id === currentRndId)) {
@@ -1167,8 +1219,17 @@
     }
   }
 
+  // 防止无限循环的标志位
+  let isRefreshingPriority = false;
+
   // 监听 MetricsPanel 的优先级变化事件
   async function handleMetricsPanelPriorityChange(e) {
+    // 防止无限循环调用
+    if (isRefreshingPriority) {
+      console.warn("正在刷新优先级数据，跳过重复调用");
+      return;
+    }
+    
     // 获取当前优先级
     const newPriority = e.detail.priority;
     
@@ -1180,8 +1241,18 @@
       priorityBarPoints = [...priorityBarPoints];
     }
     
-    // 全量刷新点图数据（异步操作，确保数据完整性）
-    await refreshPriorityBarPoints();
+    // 设置标志位，防止递归调用
+    isRefreshingPriority = true;
+    
+    try {
+      // 全量刷新点图数据（异步操作，确保数据完整性）
+      await refreshPriorityBarPoints();
+    } catch (error) {
+      console.error("刷新优先级数据时出错:", error);
+    } finally {
+      // 无论成功还是失败，都要重置标志位
+      isRefreshingPriority = false;
+    }
   }
 
   // events
@@ -1236,8 +1307,15 @@
       pr = new IncrementalReviewer(storeConfig, pluginInstance)
       await pr.initIncrementalConfig()
       
-      // 自动开始新的漫游，避免用户手动点击
-      await doIncrementalRandomDoc()
+      // 🎯 关键修复：SQL筛选模式不自动开始漫游，需要用户手动点击"应用筛选"
+      if (filterMode !== FilterMode.SQL) {
+        // 自动开始新的漫游，避免用户手动点击
+        await doIncrementalRandomDoc()
+      } else {
+        // SQL筛选模式：显示提示信息，等待用户点击应用筛选
+        content = "请输入SQL查询语句"
+        tips = "输入查询条件后，点击「应用筛选」按钮开始漫游"
+      }
     }
     
     pluginInstance.logger.info("storeConfig saved filterMode =>", storeConfig)
@@ -1919,8 +1997,15 @@ const initEditableContent = async () => {
     // 检查是否已经有内容，如果有则不自动开始漫游
     // 避免在标签页激活时覆盖已有的文档内容
     if (!currentRndId && !content) {
-      // 开始漫游
-      await doIncrementalRandomDoc()
+      // 🎯 关键修复：SQL筛选模式不自动开始漫游
+      if (filterMode !== FilterMode.SQL) {
+        // 开始漫游
+        await doIncrementalRandomDoc()
+      } else {
+        // SQL筛选模式：显示提示信息，等待用户点击应用筛选
+        content = "请输入SQL查询语句"
+        tips = "输入查询条件后，点击「应用筛选」按钮开始漫游"
+      }
     }
   })
 </script>
@@ -1958,6 +2043,15 @@ const initEditableContent = async () => {
           <option value={FilterMode.Tag}>标签</option>
           <option value={FilterMode.SQL}>SQL筛选</option>
         </select>
+        {#if filterMode === FilterMode.SQL && pluginInstance.isMobile}
+          <!-- 手机端：SQL设置按钮在筛选下拉框同一行 -->
+          <button 
+            class="action-item b3-button b3-button--outline btn-small sql-inline-btn"
+            on:click={() => showSqlDialog = true}
+          >
+            {sqlQuery ? 'SQL已设置' : '设置SQL'}
+          </button>
+        {/if}
         {#if filterMode === FilterMode.Notebook}
           <div class="notebook-selector">
             <button
@@ -2000,12 +2094,14 @@ const initEditableContent = async () => {
           </div>
         {:else if filterMode === FilterMode.Root}
           <!-- 根文档选择器 -->
-          <button
-            class="action-item b3-select fn__flex-center fn__size150"
-            on:click={startDocumentSelection}
-          >
-            {currentDocTitle}
-          </button>
+          <div class="root-doc-selector">
+            <button
+              class="action-item b3-select fn__flex-center fn__size150"
+              on:click={startDocumentSelection}
+            >
+              {currentDocTitle}
+            </button>
+          </div>
         {:else if filterMode === FilterMode.Tag}
           <!-- 标签选择器 -->
           <div class="tag-selector">
@@ -2058,8 +2154,8 @@ const initEditableContent = async () => {
               <div class="tag-loading">加载中...</div>
             {/if}
           </div>
-        {:else if filterMode === FilterMode.SQL}
-          <!-- SQL筛选输入框 -->
+        {:else if filterMode === FilterMode.SQL && !pluginInstance.isMobile}
+          <!-- 桌面端：保持原有的SQL筛选输入框 -->
           <div class="sql-selector">
             <div class="sql-input-header">
               <span class="sql-label">SQL查询语句：</span>
@@ -2084,10 +2180,10 @@ const initEditableContent = async () => {
                   </div>
                   <div class="sql-example">
                     <div class="sql-example-header">
-                      <strong>2. 按创建时间筛选（今天）：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) = date('now', 'start of day')")} title="复制SQL语句">📋</button>
+                      <strong>2. 按内容关键词筛选：</strong>
+                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'")} title="复制SQL语句">📋</button>
                     </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) = date('now', 'start of day')</code>
+                    <code>SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'</code>
                   </div>
                   <div class="sql-example">
                     <div class="sql-example-header">
@@ -2096,83 +2192,11 @@ const initEditableContent = async () => {
                     </div>
                     <code>SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) >= date('now', '-7 days')</code>
                   </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>4. 按内容关键词筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>5. 按多个关键词筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND (content LIKE '%项目%' OR content LIKE '%工作%')")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND (content LIKE '%项目%' OR content LIKE '%工作%')</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>6. 按笔记本筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND box = 'your-notebook-id-here'")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND box = 'your-notebook-id-here'</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>7. 按标签筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT DISTINCT root_id as id FROM blocks WHERE tag = '#重要#' AND root_id IS NOT NULL")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT DISTINCT root_id as id FROM blocks WHERE tag = '#重要#' AND root_id IS NOT NULL</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>8. 按多个标签筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT DISTINCT root_id as id FROM blocks WHERE tag IN ('#学习#', '#工作#', '#项目#') AND root_id IS NOT NULL")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT DISTINCT root_id as id FROM blocks WHERE tag IN ('#学习#', '#工作#', '#项目#') AND root_id IS NOT NULL</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>9. 按文档长度筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND length(content) > 100")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND length(content) > 100</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>10. 按更新时间筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(updated, 1, 4) || '-' || substr(updated, 5, 2) || '-' || substr(updated, 7, 2)) >= date('now', '-3 days')")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(updated, 1, 4) || '-' || substr(updated, 5, 2) || '-' || substr(updated, 7, 2)) >= date('now', '-3 days')</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>11. 复合条件查询：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) >= date('now', '-7 days')")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) >= date('now', '-7 days')</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>12. 随机筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL ORDER BY random() LIMIT 10")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL ORDER BY random() LIMIT 10</code>
-                  </div>
-                  <div class="sql-example">
-                    <div class="sql-example-header">
-                      <strong>13. 按文档标题筛选：</strong>
-                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND content LIKE '学习%'")} title="复制SQL语句">📋</button>
-                    </div>
-                    <code>SELECT id FROM blocks WHERE type = 'd' AND content LIKE '学习%'</code>
-                  </div>
                 </div>
                 <div class="sql-help-tip">
                   <strong>💡 使用提示：</strong>
                   <ul>
                     <li>确保SQL返回的字段名是 <code>id</code>（文档ID）</li>
-                    <li>查询特定笔记本时，请将 <code>your-notebook-id-here</code> 替换为实际的笔记本ID</li>
-                    <li>标签查询需要使用完整的标签格式（如 <code>#标签名#</code>）</li>
                     <li>可以组合多个条件创建复杂的筛选逻辑</li>
                     <li>点击 📋 按钮可快速复制SQL语句到剪贴板</li>
                   </ul>
@@ -2183,12 +2207,7 @@ const initEditableContent = async () => {
               class="action-item b3-text-field sql-input"
               bind:value={sqlQuery}
               on:input={onSqlQueryChange}
-              placeholder="请输入SQL查询语句，例如：
-• SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'
-• SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) >= date('now', '-7 days')
-• SELECT DISTINCT root_id as id FROM blocks WHERE tag = '#重要#' AND root_id IS NOT NULL
-• SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL ORDER BY random() LIMIT 10
-点击 ? 按钮查看更多示例"
+              placeholder="请输入SQL查询语句"
               rows="4"
             />
             <button
@@ -2401,58 +2420,137 @@ const initEditableContent = async () => {
         </div>
       {/if}
 
-      <div class="rnd-doc-custom-tips">
-        <div
-          data-type="NodeParagraph"
-          class="p"
-          style="color: var(--b3-card-info-color);background-color: var(--b3-card-info-background);"
-        >
-          <div class="t" contenteditable="false" spellcheck="false">{tips}</div>
-          <div class="protyle-attr" contenteditable="false" />
+      <!-- SQL筛选弹窗（仅手机端） -->
+      {#if showSqlDialog && pluginInstance.isMobile}
+        <div class="visited-dialog-mask" on:click={() => showSqlDialog = false}></div>
+        <div class="sql-dialog">
+          <div class="visited-dialog-header">
+            <span>SQL查询设置</span>
+            <button class="close-btn" on:click={() => showSqlDialog = false}>×</button>
+          </div>
+          <div class="sql-dialog-content">
+            <div class="sql-input-header">
+              <span class="sql-label">SQL查询语句：</span>
+              <button
+                class="sql-help-btn"
+                on:click={() => showSqlHelp = !showSqlHelp}
+                title="查看SQL示例"
+              >
+                ?
+              </button>
+            </div>
+            {#if showSqlHelp}
+              <div class="sql-help-panel">
+                <h4>SQL筛选示例大全：</h4>
+                <div class="sql-examples">
+                  <div class="sql-example">
+                    <div class="sql-example-header">
+                      <strong>1. 基础文档查询：</strong>
+                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL AND content != ''")} title="复制SQL语句">📋</button>
+                    </div>
+                    <code>SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL AND content != ''</code>
+                  </div>
+                  <div class="sql-example">
+                    <div class="sql-example-header">
+                      <strong>2. 按内容关键词筛选：</strong>
+                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'")} title="复制SQL语句">📋</button>
+                    </div>
+                    <code>SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'</code>
+                  </div>
+                  <div class="sql-example">
+                    <div class="sql-example-header">
+                      <strong>3. 按创建时间筛选（最近7天）：</strong>
+                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) >= date('now', '-7 days')")} title="复制SQL语句">📋</button>
+                    </div>
+                    <code>SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) >= date('now', '-7 days')</code>
+                  </div>
+                  <div class="sql-example">
+                    <div class="sql-example-header">
+                      <strong>4. 按标签筛选：</strong>
+                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT DISTINCT root_id as id FROM blocks WHERE tag = '#重要#' AND root_id IS NOT NULL")} title="复制SQL语句">📋</button>
+                    </div>
+                    <code>SELECT DISTINCT root_id as id FROM blocks WHERE tag = '#重要#' AND root_id IS NOT NULL</code>
+                  </div>
+                </div>
+                <div class="sql-help-tip">
+                  <strong>💡 使用提示：</strong>
+                  <ul>
+                    <li>确保SQL返回的字段名是 <code>id</code>（文档ID）</li>
+                    <li>标签查询需要使用完整的标签格式（如 <code>#标签名#</code>）</li>
+                    <li>可以组合多个条件创建复杂的筛选逻辑</li>
+                    <li>点击 📋 按钮可快速复制SQL语句到剪贴板</li>
+                  </ul>
+                </div>
+              </div>
+            {/if}
+            <textarea
+              class="sql-dialog-input"
+              bind:value={sqlQuery}
+              on:input={onSqlQueryChange}
+              placeholder="请输入SQL查询语句，例如：
+SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'"
+              rows="6"
+            />
+            <div class="sql-dialog-actions">
+              <button
+                class="b3-button b3-button--outline"
+                on:click={() => showSqlDialog = false}
+              >
+                取消
+              </button>
+              <button
+                class="b3-button primary-btn"
+                on:click={async () => {
+                  await applySqlFilter()
+                  showSqlDialog = false
+                }}
+                disabled={!sqlQuery || sqlQuery.trim().length === 0}
+              >
+                应用并关闭
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="editable-area-container">
+      {/if}
+
+      <!-- 只有在非手机端SQL模式或者tips不包含SQL相关内容时才显示 -->
+      {#if !(pluginInstance.isMobile && filterMode === FilterMode.SQL && (tips.includes('输入查询条件后') || tips.includes('SQL筛选结果为空')))}
+        <div class="rnd-doc-custom-tips">
+          <div
+            data-type="NodeParagraph"
+            class="p"
+            style="color: var(--b3-card-info-color);background-color: var(--b3-card-info-background);"
+          >
+            <div class="t" contenteditable="false" spellcheck="false">{tips}</div>
+            <div class="protyle-attr" contenteditable="false" />
+          </div>
+        </div>
+      {/if}
+      <div class="editable-area-container {pluginInstance.isMobile && filterMode === FilterMode.SQL ? 'mobile-sql-spacing' : ''}">
         <div class="editable-header">
           <span class="editable-title">{pluginInstance.isMobile ? title : "编辑区域"}</span>
-          <button class="lock-toggle-btn" on:click={toggleLock} title={$isLocked ? pluginInstance.i18n.unlockEditArea : pluginInstance.i18n.lockEditArea}>
-            {#if $isLocked}
-              🔒
-            {:else}
-              🔓
-            {/if}
-          </button>
+          <LockToggleButton {pluginInstance} />
         </div>
-        {#if $isLocked}
-          <div 
-            class="editable-content-area locked"
-            contenteditable="false"
-            spellcheck="false"
-            bind:innerHTML={editableContent}
-            on:click={refreshEditableContent}
-          ></div>
-        {:else}
-          <div 
-            class="editable-content-area"
-            contenteditable="true"
-            spellcheck="false"
-            bind:innerHTML={editableContent}
-            on:input={handleContentEdit}
-            on:blur={() => {
-              isEditing = false;
-              // 立即保存
-              if (saveTimeout) {
-                clearTimeout(saveTimeout);
-                saveContent(editableContent);
-              }
-            }}
-            on:focus={async () => {
-              isEditing = true;
-              // 在聚焦时刷新内容，确保与源文档同步
-              await refreshEditableContent();
-            }}
-            on:click={refreshEditableContent}
-          ></div>
-        {/if}
+        <LockableContentArea
+          {editableContent}
+          {lockedContent}
+          {isEditing}
+          onContentEdit={handleContentEdit}
+          onBlur={() => {
+            isEditing = false;
+            // 立即保存
+            if (saveTimeout) {
+              clearTimeout(saveTimeout);
+              saveContent(editableContent);
+            }
+          }}
+          onFocus={async () => {
+            isEditing = true;
+            // 在聚焦时刷新内容，确保与源文档同步
+            await refreshEditableContent();
+          }}
+          onClick={refreshEditableContent}
+        />
       </div>
     </div>
   </div>
@@ -2602,6 +2700,16 @@ const initEditableContent = async () => {
   </div>
 {/if}
 
+<!-- 移动端浮动操作按钮组 -->
+<MobileFloatingActions 
+  {pluginInstance}
+  {currentRndId}
+  {isLoading}
+  onCloseAction={handleFloatingClose}
+  onRoamAction={doIncrementalRandomDoc}
+/>
+
+
 <style lang="stylus">
 
   .custom-sql
@@ -2653,7 +2761,8 @@ const initEditableContent = async () => {
     }
     
     .action-btn-group .notebook-selector,
-    .action-btn-group .tag-selector {
+    .action-btn-group .tag-selector,
+    .action-btn-group .root-doc-selector {
       order: 1;
       flex: 1 1 auto;  /* 自适应占用剩余空间 */
       min-width: 0;  /* 允许收缩 */
@@ -2663,8 +2772,10 @@ const initEditableContent = async () => {
     /* 第三个筛选按钮：占用剩余空间但有最大宽度限制 */
     .action-btn-group .notebook-selector button.fn__size150,
     .action-btn-group .tag-selector button.fn__size150,
+    .action-btn-group .root-doc-selector button.fn__size150,
     .action-btn-group .notebook-selector button,
-    .action-btn-group .tag-selector button {
+    .action-btn-group .tag-selector button,
+    .action-btn-group .root-doc-selector button {
       width: 100% !important;  /* 占满父容器宽度 */
       min-width: 0 !important;  /* 允许收缩 */
       max-width: 100% !important;  /* 不超过父容器 */
@@ -2738,7 +2849,7 @@ const initEditableContent = async () => {
       height: 24px !important;
     }
     
-    /* 编辑区域锁定按钮移动端样式 - 和设置图标类似 */
+    /* 编辑区域头部移动端样式 */
     .editable-header {
       display: flex;
       justify-content: space-between;
@@ -2755,27 +2866,6 @@ const initEditableContent = async () => {
       color: var(--b3-theme-on-surface);
       text-align: center;  /* 居中显示 */
       flex: 1;  /* 占用剩余空间，让居中更明显 */
-    }
-    
-    /* 移动端锁定按钮样式 - 恢复显示 */
-    .editable-header .lock-toggle-btn {
-      width: calc(10% - 0.2vw) !important;  /* 和设置图标相同的宽度 */
-      min-height: 4vh !important;  /* 和设置图标相同的高度 */
-      padding: 0.8vh 0.4vw !important;  /* 增加内边距 */
-      font-size: 3.2vw !important;  /* 稍微增大图标尺寸 */
-      border: 1px solid var(--b3-border-color) !important;
-      border-radius: 6px !important;  /* 更圆润的圆角 */
-      background-color: var(--b3-theme-surface) !important;
-      color: var(--b3-theme-on-surface) !important;
-      cursor: pointer !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;  /* 添加轻微阴影 */
-    }
-    
-    .lock-toggle-btn:hover {
-      background-color: var(--b3-theme-surface-hover);
     }
     
     /* 内容区域移动端比例化优化 */
@@ -2857,7 +2947,8 @@ const initEditableContent = async () => {
     }
     
     .action-btn-group .notebook-selector,
-    .action-btn-group .tag-selector {
+    .action-btn-group .tag-selector,
+    .action-btn-group .root-doc-selector {
       order: 1;
       flex: 1 1 auto;  /* 自适应占用剩余空间 */
       min-width: 0 !important;  /* 允许收缩 */
@@ -2874,8 +2965,10 @@ const initEditableContent = async () => {
     /* 第三个筛选按钮在超小屏幕：占满父容器 - 使用更高特异性覆盖fn__size150 */
     .action-btn-group .notebook-selector button.fn__size150,
     .action-btn-group .tag-selector button.fn__size150,
+    .action-btn-group .root-doc-selector button.fn__size150,
     .action-btn-group .notebook-selector button,
-    .action-btn-group .tag-selector button {
+    .action-btn-group .tag-selector button,
+    .action-btn-group .root-doc-selector button {
       width: 100% !important;  /* 占满父容器宽度 */
       min-width: 0 !important;  /* 允许收缩 */
       max-width: 100% !important;  /* 不超过父容器 */
@@ -3121,27 +3214,6 @@ const initEditableContent = async () => {
     max-width: none !important  /* 不限制最大宽度 */
     min-width: 60px !important  /* 保持最小宽度 */
 
-  .editable-content-area
-    min-height: 400px
-    padding: 16px
-    border-radius: 6px
-    border: 1px solid var(--b3-border-color)
-    margin: 16px 0
-    background-color: var(--b3-theme-background)
-    outline: none
-    transition: border-color 0.2s ease
-    
-    &.locked
-      background-color: var(--b3-theme-background)  /* 保持和解锁状态一样的背景色 */
-      color: var(--b3-theme-on-surface)
-      cursor: not-allowed
-    
-    &:focus:not(.locked)
-      border-color: var(--b3-theme-primary)
-      box-shadow: 0 0 0 2px var(--b3-theme-primary-lighter)
-    
-    &:hover
-      border-color: var(--b3-theme-primary-light)
 
   .visited-dialog-mask
     position fixed
@@ -3245,6 +3317,63 @@ const initEditableContent = async () => {
     p
       margin 0
       font-size 14px
+
+  /* SQL弹窗样式（仅手机端） */
+  .sql-dialog
+    position fixed
+    top 50%
+    left 50%
+    transform translate(-50%, -50%)
+    width 90%
+    max-width 420px
+    max-height 80%
+    background var(--b3-theme-surface)
+    border 1px solid var(--b3-border-color)
+    border-radius 8px
+    box-shadow 0 4px 20px rgba(0, 0, 0, 0.15)
+    z-index 1001
+    overflow-y auto
+
+  .sql-dialog-content
+    padding 20px
+
+  .sql-dialog-input
+    width 100%
+    min-height 120px
+    max-height 200px
+    resize vertical
+    font-family monospace
+    font-size 13px
+    line-height 1.4
+    padding 12px
+    border 1px solid var(--b3-border-color)
+    border-radius 6px
+    background var(--b3-theme-background)
+    margin 10px 0
+    box-sizing border-box
+    
+    &::placeholder
+      color var(--b3-theme-on-surface-light)
+      font-size 12px
+      line-height 1.3
+      
+    &:focus
+      border-color var(--b3-theme-primary)
+      box-shadow 0 0 0 2px var(--b3-theme-primary-lighter)
+
+  .sql-dialog-actions
+    display flex
+    gap 10px
+    justify-content flex-end
+    margin-top 15px
+    
+    button
+      min-width 80px
+      padding 8px 16px
+
+  .sql-open-btn
+    width 100%
+    text-align center
 
   /* 优先级排序列表中的调整控件样式 */
   .priority-edit-group
@@ -3495,6 +3624,11 @@ const initEditableContent = async () => {
     position: relative
     display: inline-block
   
+  /* 根文档选择器样式 - 完全参照笔记本选择器 */
+  .root-doc-selector
+    position: relative
+    display: inline-block
+  
   .tag-list
     position: absolute
     top: 100%
@@ -3723,6 +3857,19 @@ const initEditableContent = async () => {
     }
   }
 
+  /* 手机端SQL筛选模式下的额外间距 */
+  @media (max-width: 768px) {
+    .editable-area-container.mobile-sql-spacing {
+      margin-top: 16px;  /* 增加上边距 */
+    }
+  }
+
+  @media (max-width: 480px) {
+    .editable-area-container.mobile-sql-spacing {
+      margin-top: 20px;  /* 超小屏幕下增加更多上边距 */
+    }
+  }
+
   /* 桌面端编辑区域头部样式 */
   @media (min-width: 769px) {
     .editable-header {
@@ -3741,36 +3888,6 @@ const initEditableContent = async () => {
     }
   }
 
-  /* 桌面端锁定按钮样式 */
-  @media (min-width: 769px) {
-    .lock-toggle-btn {
-      background: none;
-      border: 1px solid var(--b3-border-color);
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.2s ease;
-    }
-    
-    .lock-toggle-btn:hover {
-      background-color: var(--b3-theme-surface-light);
-      border-color: var(--b3-theme-primary);
-    }
-  }
 
-  .editable-content-area
-    min-height: 200px
-    padding: 12px
-    background-color: var(--b3-theme-background)
-    outline: none
-    transition: all 0.2s ease
-    
-    &.locked
-      background-color: var(--b3-theme-background)
-      color: var(--b3-theme-on-surface)
-      cursor: not-allowed
-      
-    &:focus:not(.locked)
-      box-shadow: inset 0 0 0 1px var(--b3-theme-primary)
+
 </style>

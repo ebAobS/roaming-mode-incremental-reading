@@ -124,20 +124,22 @@ class IncrementalReviewer {
    * 3.1 获取随机文档（基于轮盘赌选择算法）
    * 根据优先级从符合条件的文档中随机选择一篇
    * 
+   * @param config 可选的配置参数，不提供则使用当前实例配置
    * @returns 选中的文档ID
    */
-  public async getRandomDoc(): Promise<string | { docId: string, isAbsolutePriority: boolean }> {
+  public async getRandomDoc(config?: RandomDocConfig): Promise<string | { docId: string, isAbsolutePriority: boolean }> {
     try {
       this.pluginInstance.logger.info("开始获取随机文档...")
       
-      // 3.1.1 获取最新过滤条件
-      const filterCondition = await this.buildFilterCondition()
+      // 3.1.1 获取最新过滤条件，优先使用传入的配置
+      const filterCondition = await this.buildFilterCondition(config)
       this.pluginInstance.logger.info(`构建的过滤条件: ${filterCondition}`)
       
       let excludeVisited = ""
       
       // 3.1.2 构建排除已访问文档的条件
-      if (this.storeConfig.excludeVisited) {
+      const targetConfig = config || this.storeConfig
+      if (targetConfig.excludeVisited) {
         this.pluginInstance.logger.info("启用了排除已访问文档选项")
         excludeVisited = `
           AND (
@@ -245,7 +247,7 @@ class IncrementalReviewer {
       this.pluginInstance.logger.info(`前5个文档的优先级: ${top5Docs.join(', ')}`)
 
       // 绝对优先级顺序漫游概率逻辑
-      const prob = this.storeConfig.absolutePriorityProb ?? 0
+      const prob = targetConfig.absolutePriorityProb ?? 0
       if (prob > 0 && Math.random() < prob) {
         // 直接选择优先级最高的未访问文档
         let maxDoc = docPriorityList[0]
@@ -345,15 +347,16 @@ class IncrementalReviewer {
 
   /**
    * 获取所有文档的优先级列表，包含id、标题和优先级
+   * @param config 可选的配置参数，不提供则使用当前实例配置
    * @returns 文档优先级列表
    */
-  public async getPriorityList(): Promise<Array<{id: string; title?: string; priority: number}>> {
+  public async getPriorityList(config?: RandomDocConfig): Promise<Array<{id: string; title?: string; priority: number}>> {
     try {
       // 获取最新过滤条件
-      const filterCondition = await this.buildFilterCondition()
+      const filterCondition = await this.buildFilterCondition(config)
       
       // 获取符合条件的文档总数
-      const totalCount = await this.getTotalDocCount()
+      const totalCount = await this.getTotalDocCount(config)
       if (totalCount === 0) {
         return [];
       }
@@ -1334,9 +1337,9 @@ class IncrementalReviewer {
    * 
    * @returns 已访问文档数量
    */
-  public async getVisitedCount(): Promise<number> {
+  public async getVisitedCount(config?: RandomDocConfig): Promise<number> {
     try {
-      const filterCondition = await this.buildFilterCondition()
+      const filterCondition = await this.buildFilterCondition(config)
       
       // 6.3.1 构建SQL查询已访问文档
       const sql = `
@@ -1367,9 +1370,9 @@ class IncrementalReviewer {
    * 6.x 获取今日已访问文档详细列表（含id和标题）
    * @returns [{id, content}[]]
    */
-  public async getVisitedDocs(): Promise<Array<{id: string, content: string}>> {
+  public async getVisitedDocs(config?: RandomDocConfig): Promise<Array<{id: string, content: string}>> {
     try {
-      const filterCondition = await this.buildFilterCondition()
+      const filterCondition = await this.buildFilterCondition(config)
       const sql = `
         SELECT id, content FROM blocks 
         WHERE type = 'd' 

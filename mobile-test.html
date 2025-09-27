@@ -245,6 +245,66 @@
                 font-size: 17px;
             }
         }
+        
+        /* 锁定状态演示样式 */
+        .locked-demo {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .editable-header-demo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .lock-toggle-btn-demo {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .editable-content-area-demo {
+            padding: 16px;
+            min-height: 200px;
+            background-color: #fff;
+            transition: all 0.2s ease;
+        }
+        
+        .editable-content-area-demo.locked {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 2px dashed #dee2e6;
+            position: relative;
+            cursor: not-allowed;
+        }
+        
+        .editable-content-area-demo.locked::before {
+            content: "🔒";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 16px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        
+        .editable-content-area-demo.locked h3 {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
@@ -334,6 +394,26 @@
         
         <button>添加指标</button>
         
+        <h2>锁定状态样式测试</h2>
+        <div class="locked-demo">
+            <div class="editable-header-demo">
+                <span class="editable-title">编辑区域 (锁定状态)</span>
+                <button class="lock-toggle-btn-demo">🔒</button>
+            </div>
+            <div class="editable-content-area-demo locked">
+                <h3>示例文档标题</h3>
+                <p>这是一个锁定状态的内容区域示例。当内容被锁定时，用户无法编辑内容，但可以正常阅读。</p>
+                <p>新的样式包括：</p>
+                <ul>
+                    <li>渐变背景而非单调的灰色</li>
+                    <li>虚线边框提示锁定状态</li>
+                    <li>右上角锁定图标</li>
+                    <li>轻微透明度增加层次感</li>
+                </ul>
+                <p>这样的设计既保持了功能性，又提升了视觉美感。</p>
+            </div>
+        </div>
+        
         <h2>测试说明</h2>
         <ul>
             <li>在移动设备上打开此页面</li>
@@ -341,6 +421,7 @@
             <li>验证表单元素是否易于操作</li>
             <li>确认文字大小是否适合阅读</li>
             <li>测试按钮是否足够大，便于点击</li>
+            <li>🆕 检查锁定状态的新样式是否美观</li>
         </ul>
     </div>
 </body>

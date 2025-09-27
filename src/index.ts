@@ -74,6 +74,10 @@ export default class RandomDocPlugin extends Plugin {
   public floatingButton: HTMLElement | null = null
   /** 1.11 页面观察器引用 */
   public pageObserver: MutationObserver | null = null
+  /** 1.12 紫色浮动按钮组件实例 */
+  public purpleButtonInstance: any = null
+  /** 1.13 紫色浮动按钮观察器 */
+  public purpleButtonObserver: MutationObserver | null = null
 
   /**
    * 1.12 清理所有已存在的漫游实例
