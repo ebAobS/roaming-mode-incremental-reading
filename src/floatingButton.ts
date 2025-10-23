@@ -67,8 +67,8 @@ function createFloatingButton(pluginInstance: RandomDocPlugin): HTMLElement {
     position: fixed;
     bottom: 80px;
     right: 20px;
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 50%;
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
@@ -86,7 +86,7 @@ function createFloatingButton(pluginInstance: RandomDocPlugin): HTMLElement {
   button.innerHTML = `
     <div style="
       color: white;
-      font-size: 24px;
+      font-size: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -172,8 +172,8 @@ function createFloatingButton(pluginInstance: RandomDocPlugin): HTMLElement {
       const newY = initialY + deltaY
       
       // 限制在屏幕范围内
-      const maxX = window.innerWidth - 60
-      const maxY = window.innerHeight - 60
+      const maxX = window.innerWidth - 50
+      const maxY = window.innerHeight - 50
       const constrainedX = Math.max(20, Math.min(maxX, newX))
       const constrainedY = Math.max(20, Math.min(maxY, newY))
       

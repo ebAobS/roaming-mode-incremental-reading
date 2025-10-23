@@ -1,0 +1,136 @@
+/* ========================================
+   漫游式渐进阅读插件 - 浮窗自定义样式
+   ======================================== */
+
+/* 1. 主页面浮动按钮自定义 */
+#incremental-reading-floating-btn {
+    /* 位置调整 */
+    bottom: 100px !important;  /* 距离底部距离 */
+    right: 30px !important;    /* 距离右侧距离 */
+    
+    /* 尺寸调整 */
+    width: 60px !important;    /* 按钮宽度 */
+    height: 60px !important;   /* 按钮高度 */
+    
+    /* 背景颜色自定义 */
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%) !important;
+    
+    /* 阴影效果 */
+    box-shadow: 0 6px 25px rgba(255, 107, 107, 0.5) !important;
+    
+    /* 透明度 */
+    opacity: 0.95 !important;
+    
+    /* 圆角调整 */
+    border-radius: 15px !important;  /* 改为圆角矩形 */
+  }
+  
+  /* 悬停效果自定义 */
+  #incremental-reading-floating-btn:hover {
+    transform: scale(1.15) !important;
+    box-shadow: 0 8px 30px rgba(255, 107, 107, 0.7) !important;
+  }
+  
+  /* 2. 移动端操作浮窗自定义 */
+  
+  /* 关闭按钮自定义 */
+  .mobile-floating-back-btn {
+    /* 位置微调 */
+    bottom: 40px !important;
+    right: 25px !important;
+    
+    /* 颜色主题 */
+    background-color: #e74c3c !important;
+    
+    /* 尺寸调整 */
+    width: 45px !important;
+    height: 45px !important;
+    
+    /* 字体调整 */
+    font-size: 16px !important;
+    font-weight: bold !important;
+  }
+  
+  /* 跳转按钮自定义 */
+  .mobile-floating-jump-btn {
+    bottom: 140px !important;
+    right: 25px !important;
+    background-color: #27ae60 !important;
+    width: 45px !important;
+    height: 45px !important;
+    font-size: 18px !important;
+  }
+  
+  /* 漫游按钮自定义 */
+  .mobile-floating-roam-btn {
+    bottom: 90px !important;
+    right: 25px !important;
+    background-color: #3498db !important;
+    width: 45px !important;
+    height: 45px !important;
+    font-size: 16px !important;
+  }
+  
+  /* 3. 高级自定义：主题适配 */
+  
+  /* 暗色主题下的浮窗样式 */
+  :root[data-theme-mode="dark"] {
+    #incremental-reading-floating-btn {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+      box-shadow: 0 6px 25px rgba(44, 62, 80, 0.6) !important;
+    }
+    
+    .mobile-floating-back-btn {
+      background-color: #c0392b !important;
+    }
+    
+    .mobile-floating-jump-btn {
+      background-color: #229954 !important;
+    }
+    
+    .mobile-floating-roam-btn {
+      background-color: #2980b9 !important;
+    }
+  }
+  
+  /* 亮色主题下的浮窗样式 */
+  :root[data-theme-mode="light"] {
+    #incremental-reading-floating-btn {
+      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%) !important;
+      box-shadow: 0 6px 25px rgba(116, 185, 255, 0.4) !important;
+    }
+  }
+  
+  /* 4. 动画效果增强 */
+  .mobile-floating-back-btn,
+  .mobile-floating-jump-btn,
+  .mobile-floating-roam-btn {
+    /* 添加呼吸动画 */
+    animation: floating-pulse 2s ease-in-out infinite alternate !important;
+  }
+  
+  @keyframes floating-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+  }
+  
+  /* 5. 个性化图标替换 */
+  #incremental-reading-floating-btn::before {
+    content: "🚀" !important;  /* 替换为火箭图标 */
+    font-size: 24px !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  
+  /* 隐藏原始SVG图标 */
+  #incremental-reading-floating-btn svg {
+    display: none !important;
+  }
