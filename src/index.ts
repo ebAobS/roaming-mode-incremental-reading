@@ -45,6 +45,8 @@ import { initTopbar, registerCommand } from "./topbar"
 import KernelApi from "./api/kernel-api"
 import IncrementalReviewer from "./service/IncrementalReviewer"
 import { initFloatingButton } from "./floatingButton"
+import PluginSidebar from "./libs/PluginSidebar.svelte"
+import { icons } from "./utils/svg"
 
 /**
  * 1. 漫游式渐进阅读插件类
@@ -74,6 +76,10 @@ export default class RandomDocPlugin extends Plugin {
   public floatingButton: HTMLElement | null = null
   /** 1.11 页面观察器引用 */
   public pageObserver: MutationObserver | null = null
+  /** 1.12 侧边栏面板实例引用 */
+  public dockInstance: any = null
+  /** 1.13 侧边栏组件实例引用 */
+  public dockContentInstance: any = null
 
   /**
    * 1.12 清理所有已存在的漫游实例
@@ -155,6 +161,8 @@ export default class RandomDocPlugin extends Plugin {
     await registerCommand(this)
     // 2.3 初始化主页面浮动按钮（手机端友好）
     await initFloatingButton(this)
+    // 2.4 初始化侧边栏面板
+    await this.initSidebar()
   }
 
   /**
@@ -163,12 +171,19 @@ export default class RandomDocPlugin extends Plugin {
    */
   onunload() {
     // 2.1.1 清理文档总数缓存
-    IncrementalReviewer.clearAllCache()
+    // IncrementalReviewer.clearAllCache() // 方法不存在，暂时注释
     
     // 2.1.2 清理浮动按钮
     if (this.floatingButton) {
-      const { removeFloatingButton } = require("./floatingButton")
-      removeFloatingButton(this)
+      import("./floatingButton").then(({ removeFloatingButton }) => {
+        removeFloatingButton(this)
+      })
+    }
+    
+    // 2.1.3 清理侧边栏面板
+    if (this.dockContentInstance) {
+      this.dockContentInstance.$destroy()
+      this.dockContentInstance = null
     }
     
     this.logger.info("插件已卸载，缓存已清理")
@@ -197,5 +212,136 @@ export default class RandomDocPlugin extends Plugin {
     }
 
     return storeConfig
+  }
+
+  /**
+   * 3.2 初始化侧边栏面板
+   * 在思源笔记侧边栏中创建一个新的面板用于显示插件相关内容
+   */
+  private async initSidebar() {
+    try {
+      const DOCK_TYPE = "plugin_sidebar"
+      const pluginInstance = this // 保存插件实例引用，用于闭包
+      // 构建完整的 data-type，格式：插件名 + type
+      const fullDockType = `${this.name}${DOCK_TYPE}`
+      
+      // 3.2.1 添加侧边栏面板
+      // 注意：icon 字段只支持内置图标名称字符串，不支持 SVG，需要在 init 中手动设置
+      const dockResult = this.addDock({
+        config: {
+          position: "RightTop",
+          size: { width: 300, height: 0 },
+          icon: "iconRefresh",
+          title: this.i18n.sidebarTitle || "漫游式渐进阅读",
+        },
+        data: {
+          id: DOCK_TYPE,
+        },
+        type: DOCK_TYPE,
+        init: function() {
+          // 初始化时创建组件实例
+          // 注意：这里的 this 指向 IDockModel，不是插件实例
+          const dockModel = this as any
+          
+          // 3.2.1.1 设置自定义 SVG 图标
+          // 延迟执行以确保 DOM 已完全渲染
+          setTimeout(() => {
+            try {
+              // 通过 data-type 属性找到对应的 dock item
+              const dockItem = document.querySelector(`span[data-type="${fullDockType}"]`) as HTMLElement
+              
+              if (dockItem) {
+                // 查找 SVG 元素
+                let svgElement = dockItem.querySelector('svg')
+                
+                if (svgElement) {
+                  // 创建临时容器来解析 SVG 字符串
+                  const tempDiv = document.createElement('div')
+                  tempDiv.innerHTML = icons.iconBook.trim()
+                  const newSvg = tempDiv.querySelector('svg')
+                  
+                  if (newSvg) {
+                    // 设置新 SVG 的属性
+                    newSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+                    newSvg.setAttribute('viewBox', '0 0 448 512')
+                    newSvg.setAttribute('width', '1em')
+                    newSvg.setAttribute('height', '1em')
+                    
+                    // 直接替换整个 SVG 元素（包括内部的 use 标签）
+                    svgElement.outerHTML = newSvg.outerHTML
+                    pluginInstance.logger.info("自定义 SVG 图标设置成功")
+                  } else {
+                    pluginInstance.logger.warn("无法解析 SVG 图标字符串")
+                  }
+                } else {
+                  // 如果没有找到 SVG 元素，创建一个新的
+                  const tempDiv = document.createElement('div')
+                  tempDiv.innerHTML = icons.iconBook.trim()
+                  const newSvg = tempDiv.querySelector('svg')
+                  
+                  if (newSvg) {
+                    newSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+                    newSvg.setAttribute('viewBox', '0 0 448 512')
+                    newSvg.setAttribute('width', '1em')
+                    newSvg.setAttribute('height', '1em')
+                    
+                    // 插入到 dock item 的开头
+                    if (dockItem.firstChild) {
+                      dockItem.insertBefore(newSvg, dockItem.firstChild)
+                    } else {
+                      dockItem.appendChild(newSvg)
+                    }
+                    pluginInstance.logger.info("自定义 SVG 图标通过创建新元素设置成功")
+                  }
+                }
+              } else {
+                pluginInstance.logger.warn(`无法找到 dock item，选择器: span[data-type="${fullDockType}"]`)
+              }
+            } catch (iconError) {
+              pluginInstance.logger.error("设置自定义图标失败:", iconError)
+            }
+          }, 100)
+          
+          // 3.2.1.2 创建侧边栏内容组件
+          if (dockModel && dockModel.element) {
+            pluginInstance.dockContentInstance = new PluginSidebar({
+              target: dockModel.element as HTMLElement,
+              props: {
+                pluginInstance: pluginInstance,
+              },
+            })
+            pluginInstance.logger.info("侧边栏面板组件已创建", {
+              hasElement: !!dockModel.element,
+              elementType: dockModel.element?.tagName
+            })
+          } else {
+            pluginInstance.logger.error("侧边栏面板初始化失败：element 不可用", {
+              hasDockModel: !!dockModel,
+              hasElement: !!(dockModel && dockModel.element)
+            })
+          }
+        },
+        destroy: function() {
+          // 销毁时清理组件实例
+          // 注意：这里的 this 指向 IDockModel
+          if (pluginInstance.dockContentInstance) {
+            pluginInstance.dockContentInstance.$destroy()
+            pluginInstance.dockContentInstance = null
+            pluginInstance.logger.info("侧边栏面板组件已销毁")
+          }
+        },
+      })
+
+      // 保存 dock model 引用
+      this.dockInstance = dockResult.model
+
+      this.logger.info("侧边栏面板初始化成功", {
+        hasModel: !!dockResult.model,
+        hasElement: !!(dockResult.model && dockResult.model.element),
+        fullDockType: fullDockType
+      })
+    } catch (error) {
+      this.logger.error("初始化侧边栏面板失败:", error)
+    }
   }
 }

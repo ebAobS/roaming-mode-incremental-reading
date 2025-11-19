@@ -24,5 +24,6 @@
   "lockEditArea": "Lock Edit",
   "unlockEditArea": "Unlock Edit",
   "editAreaLocked": "Locked",
-  "editAreaUnlocked": "Editable"
+  "editAreaUnlocked": "Editable",
+  "sidebarTitle": "Roaming Mode Incremental Reading"
 }
