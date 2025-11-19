@@ -28,6 +28,8 @@
   import { storeName } from "../Constants"
   import RandomDocConfig, { FilterMode } from "../models/RandomDocConfig"
   import { Dialog, openTab, showMessage } from "siyuan"
+  import katex from "katex";
+  import "katex/dist/katex.min.css";
   
   // 智能消息显示函数：在全屏模式下使用自定义消息，否则使用SiYuan原生消息
   const smartShowMessage = (message: string, duration: number = 3000, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
@@ -1895,6 +1897,11 @@
   }
 
   // 导出函数，让外部可以调用
+  // 导出方法：获取当前文档ID
+  export const getCurrentDocId = (): string | undefined => {
+    return currentRndId
+  }
+
   export const resetAndRefresh = async () => {
     try {
       await resetAllVisitCounts()
@@ -2004,10 +2011,48 @@ const initEditableContent = async () => {
     if (docResult && docResult.code === 0) {
       const doc = docResult.data as any;
       editableContent = doc.content || "";
+      // 延迟渲染数学公式，等待DOM更新
+      setTimeout(() => {
+        renderEditableMath();
+      }, 100);
     }
   } catch (error) {
     pluginInstance.logger.error("获取文档内容失败:", error);
     editableContent = content; // 回退到原有内容
+  }
+};
+
+const renderMath = (element) => {
+  if (!element) return;
+  
+  // 查找所有数学公式元素
+  const mathElements = element.querySelectorAll('div[data-type="NodeMathBlock"]');
+  
+  mathElements.forEach((mathElement) => {
+    try {
+      const mathContent = mathElement.dataset.content || '';
+      if (mathContent.trim()) {
+        // 使用KaTeX渲染公式
+        const rendered = katex.renderToString(mathContent, {
+          displayMode: mathElement.classList.contains('block') || mathElement.tagName === 'DIV',
+          throwOnError: false,
+          strict: false
+        });
+        mathElement.innerHTML = rendered;
+        mathElement.classList.add('katex-rendered');
+      }
+    } catch (error) {
+      pluginInstance.logger.warn('公式渲染失败:', error);
+      // 如果渲染失败，保持原始内容
+    }
+  });
+};
+
+// 渲染编辑区域中的所有数学公式
+const renderEditableMath = () => {
+  const editableElement = document.querySelector('.editable-content-area');
+  if (editableElement) {
+    renderMath(editableElement);
   }
 };
 
@@ -2025,6 +2070,10 @@ const initEditableContent = async () => {
         // 只有在内容确实发生变化时才更新，避免不必要的重新渲染
         if (newContent !== editableContent) {
           editableContent = newContent;
+          // 延迟渲染数学公式，等待DOM更新
+          setTimeout(() => {
+            renderEditableMath();
+          }, 100);
           pluginInstance.logger.info("编辑区内容已刷新，与源文档同步");
         }
       }
@@ -4024,6 +4073,55 @@ SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'"
     }
   }
 
+  /* 数学公式居中显示样式 */
 
+  :global(.editable-content-area .katex-rendered) {
+    display: block !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  :global(.editable-content-area div[data-type=NodeMathBlock]) {
+    min-height: auto !important;
+  }
+
+  /* KaTeX 块级公式 */
+  :global(.editable-content-area .katex-display) {
+    display: inline-block !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+  }
+
+  :global(.editable-content-area .katex-block) {
+    text-align: center !important;
+  }
+
+  /* 移动端适配 */
+  @media (max-width: 768px) {
+    /* 整体容器 */
+    :global(.editable-content-area .katex-rendered) {
+      display: block !important;
+      width: 100% !important;
+      text-align: center !important;
+      overflow-x: auto !important;  /* 防止超长公式溢出 */
+      -webkit-overflow-scrolling: touch !important; /* 平滑滚动 */
+    }
+
+    :global(.editable-content-area div[data-type=NodeMathBlock]) {
+      min-height: auto !important;
+    }
+
+    /* 块级公式 */
+    :global(.editable-content-area .katex-display) {
+      display: inline-block !important;
+      text-align: center !important;
+      max-width: 100% !important; /* 防止超出屏幕宽度 */
+      overflow-x: auto !important;
+    }
+
+    :global(.editable-content-area .katex-block) {
+      text-align: center !important;
+    }
+  }
 
 </style>
