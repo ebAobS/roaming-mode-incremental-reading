@@ -12,7 +12,7 @@
     "makeLink": "python scripts/make_dev_link.py",
     "dev": "vite build --watch",
     "dev:direct": "vite build --watch --outDir",
-    "dev:siyuan": "cross-env NODE_ENV=development SIYUAN_PLUGIN_DIR=\"C:\\Users\\Administrator\\SiYuan\\data\\plugins\" vite build --watch",
+    "dev:siyuan": "cross-env NODE_ENV=development dotenv -e .env -- vite build --watch",
     "build": "vite build",
     "build:direct": "vite build --outDir",
     "build:release": "cross-env NODE_ENV=production vite build",
@@ -29,8 +29,10 @@
     "@tsconfig/svelte": "^5.0.4",
     "@types/minimist": "1.2.4",
     "cross-env": "^7.0.3",
+    "dotenv-cli": "^11.0.0",
     "fast-glob": "^3.3.2",
     "jsdom": "^22.1.0",
+    "mathjax": "^4.0.0",
     "minimist": "^1.2.8",
     "rollup-plugin-livereload": "^2.0.5",
     "siyuan": "^0.8.9",
@@ -45,6 +47,7 @@
     "vitest": "^0.33.0"
   },
   "dependencies": {
+    "katex": "^0.16.25",
     "zhi-common": "^1.33.0",
     "zhi-lib-base": "^0.8.0"
   },

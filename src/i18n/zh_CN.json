@@ -24,5 +24,6 @@
   "lockEditArea": "锁定编辑",
   "unlockEditArea": "解锁编辑",
   "editAreaLocked": "已锁定",
-  "editAreaUnlocked": "可编辑"
+  "editAreaUnlocked": "可编辑",
+  "sidebarTitle": "漫游式渐进阅读"
 }
