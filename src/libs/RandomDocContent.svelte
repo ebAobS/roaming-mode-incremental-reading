@@ -2377,6 +2377,13 @@ const renderEditableMath = () => {
                     </div>
                     <code>SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) >= date('now', '-7 days')</code>
                   </div>
+                  <div class="sql-example">
+                    <div class="sql-example-header">
+                      <strong>4. 按最近更新时间排序取前50条：</strong>
+                      <button class="copy-btn" on:click={() => copySqlToClipboard("SELECT id FROM blocks WHERE type = 'd' ORDER BY updated DESC LIMIT 50")} title="复制SQL语句">📋</button>
+                    </div>
+                    <code>SELECT id FROM blocks WHERE type = 'd' ORDER BY updated DESC LIMIT 50</code>
+                  </div>
                 </div>
                 <div class="sql-help-tip">
                   <strong>💡 使用提示：</strong>

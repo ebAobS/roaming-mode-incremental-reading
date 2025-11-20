@@ -47,6 +47,7 @@
   let availableTags: string[] = []
   let isTagsLoading = false
   let showTagDropdown = false
+  let sqlQuery = ""
 
   let isDocsLoading = false
   let showDocSelector = false
@@ -72,6 +73,13 @@
   let priorityList: Array<{ id: string; title: string; priority: number; visited: boolean }> = []
   let visitedDocs: Array<{ id: string; content: string; lastTime?: string }> = []
   const readNumberInput = (event: Event) => parseFloat((event.target as HTMLInputElement).value)
+  let showSqlExamples = false
+  let sqlExamples: Array<{ title: string; sql: string }> = []
+  let newSqlTitle = ""
+  let newSqlBody = ""
+  let draggedItem: { id: string; priority: number } | null = null
+  let draggedIndex = -1
+  let dragOverIndex = -1
 
   $: currentDocTitle = (() => {
     if (!rootId) {
@@ -134,6 +142,9 @@
     if (filterMode === FilterMode.Tag) {
       await loadAvailableTags()
     }
+    if (filterMode === FilterMode.SQL) {
+      sqlQuery = storeConfig.sqlQuery || ""
+    }
   }
 
   const toggleNotebook = (notebookId: string) => {
@@ -189,6 +200,73 @@
     showTagDropdown = false
     pr = null
     await ensureReviewer()
+  }
+
+  const applySqlQuery = async () => {
+    storeConfig.sqlQuery = sqlQuery || ""
+    await pluginInstance.saveData(storeName, storeConfig)
+    pr = null
+    await ensureReviewer()
+    showMessage("已应用 SQL 筛选条件", 2000, "info")
+  }
+
+  const copySqlExample = async (sql: string) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(sql)
+      } else {
+        const textarea = document.createElement("textarea")
+        textarea.value = sql
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand("copy")
+        textarea.remove()
+      }
+      showMessage("SQL 已复制", 2000, "info")
+    } catch (error) {
+      pluginInstance.logger.error("复制 SQL 失败", error)
+      showMessage("复制失败，请手动复制", 2000, "error")
+    }
+  }
+
+  const defaultSqlExamples: Array<{ title: string; sql: string }> = [
+    { title: "基础文档查询", sql: "SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL AND content != ''" },
+    { title: "按内容关键词筛选", sql: "SELECT id FROM blocks WHERE type = 'd' AND content LIKE '%学习%'" },
+    { title: "按创建时间筛选（最近7天）", sql: "SELECT id FROM blocks WHERE type = 'd' AND strftime('%Y-%m-%d', substr(created, 1, 4) || '-' || substr(created, 5, 2) || '-' || substr(created, 7, 2)) >= date('now', '-7 days')" },
+    { title: "按最近更新时间排序取前50条", sql: "SELECT id FROM blocks WHERE type = 'd' ORDER BY updated DESC LIMIT 50" },
+  ]
+
+  const loadSqlExamples = async () => {
+    try {
+      const saved = await pluginInstance.loadData("sidebarSqlExamples")
+      if (Array.isArray(saved) && saved.length > 0) {
+        sqlExamples = saved as Array<{ title: string; sql: string }>
+      } else {
+        sqlExamples = [...defaultSqlExamples]
+        await pluginInstance.saveData("sidebarSqlExamples", sqlExamples)
+      }
+    } catch (error) {
+      pluginInstance.logger.warn("加载 SQL 示例失败，使用默认示例", error)
+      sqlExamples = [...defaultSqlExamples]
+    }
+  }
+
+  const addSqlExample = async () => {
+    if (!newSqlTitle.trim() || !newSqlBody.trim()) {
+      showMessage("请完善示例标题和SQL内容", 2000, "error")
+      return
+    }
+    sqlExamples = [...sqlExamples, { title: newSqlTitle.trim(), sql: newSqlBody.trim() }]
+    newSqlTitle = ""
+    newSqlBody = ""
+    await pluginInstance.saveData("sidebarSqlExamples", sqlExamples)
+    showMessage("已添加示例", 2000, "info")
+  }
+
+  const removeSqlExample = async (index: number) => {
+    sqlExamples = sqlExamples.filter((_, i) => i !== index)
+    await pluginInstance.saveData("sidebarSqlExamples", sqlExamples)
+    showMessage("已删除示例", 2000, "info")
   }
 
   const startDocumentSelection = () => {
@@ -385,6 +463,60 @@
     if (!doc) return
     const newValue = Math.max(0, parseFloat((doc.priority - 0.1).toFixed(2)))
     await handlePriorityInputInList(docId, newValue)
+  }
+
+  const handleDragStart = (e: DragEvent, item: { id: string; priority: number }, index: number) => {
+    draggedItem = item
+    draggedIndex = index
+    dragOverIndex = -1
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move"
+      e.dataTransfer.setData("text/plain", item.id)
+    }
+  }
+
+  const handleDragOver = (e: DragEvent, index: number) => {
+    e.preventDefault()
+    dragOverIndex = index
+  }
+
+  const handleDragLeave = (e: DragEvent) => {
+    e.preventDefault()
+    dragOverIndex = -1
+  }
+
+  const handleDrop = async (e: DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (draggedItem === null || draggedIndex === -1 || draggedIndex === dropIndex) {
+      draggedItem = null
+      draggedIndex = -1
+      dragOverIndex = -1
+      return
+    }
+
+    try {
+      const working = [...priorityList]
+      const [item] = working.splice(draggedIndex, 1)
+      working.splice(dropIndex, 0, item)
+
+      let newPriority = item.priority
+      if (dropIndex === 0 && working.length > 1) {
+        newPriority = working[1].priority + 1
+      } else if (dropIndex === working.length - 1 && working.length > 1) {
+        newPriority = working[working.length - 2].priority - 1
+      } else if (working.length > 2) {
+        const upper = working[dropIndex - 1]?.priority ?? 5
+        const lower = working[dropIndex + 1]?.priority ?? 5
+        newPriority = (upper + lower) / 2
+      }
+      newPriority = parseFloat(Math.max(0, Math.min(10, newPriority)).toFixed(2))
+
+      await handlePriorityInputInList(item.id, newPriority)
+    } finally {
+      draggedItem = null
+      draggedIndex = -1
+      dragOverIndex = -1
+    }
   }
 
   const handlePriorityBarDragging = (e: CustomEvent) => {
@@ -633,6 +765,7 @@
     filterMode = storeConfig.filterMode ?? FilterMode.Notebook
     rootId = storeConfig.rootId ?? ""
     selectedDocTitle = storeConfig.rootDocTitle ?? ""
+    sqlQuery = storeConfig.sqlQuery ?? ""
 
     if (storeConfig.reviewMode === ReviewMode.Incremental) {
       await ensureReviewer()
@@ -649,6 +782,7 @@
         }
       }
     }
+    await loadSqlExamples()
   })
 </script>
 
@@ -686,6 +820,7 @@
             <option value={FilterMode.Notebook}>笔记本</option>
             <option value={FilterMode.Root}>根文档</option>
             <option value={FilterMode.Tag}>标签</option>
+            <option value={FilterMode.SQL}>SQL 查询</option>
           </select>
         </div>
 
@@ -755,6 +890,61 @@
               {/if}
             </div>
           </div>
+        {:else if filterMode === FilterMode.SQL}
+          <div class="filter-row">
+            <label class="filter-label" for="sql-input">SQL 查询</label>
+            <textarea
+              id="sql-input"
+              class="filter-sql"
+              bind:value={sqlQuery}
+              rows="4"
+              placeholder="例如：SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL AND content != ''"
+            ></textarea>
+            <div class="toolbar-row">
+              <button class="secondary-button" on:click={applySqlQuery}>应用筛选</button>
+              <button class="secondary-button" on:click={() => (showSqlExamples = !showSqlExamples)}>
+                {showSqlExamples ? "收起语句库" : "查看语句库"}
+              </button>
+            </div>
+            {#if showSqlExamples}
+              <div class="sql-examples-block">
+                <div class="sql-example-tip">
+                  <strong>💡 使用提示：</strong>
+                  <ul>
+                    <li>确保SQL返回的字段名是 <code>id</code>（文档ID）</li>
+                    <li>可以组合多个条件创建复杂的筛选逻辑</li>
+                    <li>点击 📋 按钮可快速复制SQL语句到剪贴板</li>
+                  </ul>
+                </div>
+                {#each sqlExamples as example, idx}
+                  <div class="sql-example-item">
+                    <div class="sql-example-header">
+                      <strong>{example.title}</strong>
+                      <div class="sql-example-actions">
+                        <button class="copy-btn" title="复制" on:click={() => copySqlExample(example.sql)}>📋</button>
+                        <button class="copy-btn danger" title="删除" on:click={() => removeSqlExample(idx)}>🗑</button>
+                      </div>
+                    </div>
+                    <code>{example.sql}</code>
+                  </div>
+                {/each}
+                <div class="sql-example-add">
+                  <input
+                    class="b3-text-field"
+                    placeholder="新SQL标题"
+                    bind:value={newSqlTitle}
+                  />
+                  <textarea
+                    class="filter-sql"
+                    placeholder="新SQL语句"
+                    rows="2"
+                    bind:value={newSqlBody}
+                  ></textarea>
+                  <button class="secondary-button" on:click={addSqlExample}>添加到语句库</button>
+                </div>
+              </div>
+            {/if}
+          </div>
         {/if}
       </div>
 
@@ -783,10 +973,6 @@
             继续漫游
           {/if}
         </button>
-        <div class="secondary-actions">
-          <button class="secondary-button" on:click={() => switchTab(3)}>已漫游文档</button>
-          <button class="secondary-button" on:click={() => switchTab(2)}>优先级表</button>
-        </div>
       </div>
     {:else if activeTab === 1}
       <div class="section">
@@ -824,8 +1010,16 @@
           <div class="placeholder">暂无优先级数据。</div>
         {:else}
           <ul class="priority-list">
-            {#each priorityList as doc}
-              <li>
+            {#each priorityList as doc, index}
+              <li
+                draggable="true"
+                class:dragging={draggedIndex === index}
+                class:drag-over={dragOverIndex === index}
+                on:dragstart={(e) => handleDragStart(e, doc, index)}
+                on:dragover={(e) => handleDragOver(e, index)}
+                on:dragleave={handleDragLeave}
+                on:drop={(e) => handleDrop(e, index)}
+              >
                 <div class="priority-main">
                   <span
                     class="priority-title"
@@ -988,8 +1182,8 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
   }
 
   .sidebar-header {
@@ -1025,6 +1219,7 @@
   .icon-btn {
     border: 1px solid var(--b3-theme-border);
     background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
     border-radius: 4px;
     padding: 6px 8px;
     cursor: pointer;
@@ -1038,12 +1233,13 @@
   }
 
   .tab-bar button {
-    background: transparent;
+    background: var(--b3-theme-surface);
     border: none;
     padding: 10px 0;
     cursor: pointer;
     font-size: 13px;
     border-right: 1px solid var(--b3-theme-border);
+    color: var(--b3-theme-on-surface);
   }
 
   .tab-bar button:last-child {
@@ -1051,9 +1247,9 @@
   }
 
   .tab-bar button.selected {
-    color: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
     font-weight: 600;
-    background: var(--b3-theme-surface);
+    background: var(--b3-theme-primary);
   }
 
   .tab-panels {
@@ -1101,6 +1297,7 @@
   .filter-label {
     font-size: 13px;
     margin-right: 8px;
+    color: var(--b3-theme-on-surface);
   }
 
   .filter-select {
@@ -1110,6 +1307,95 @@
     border: 1px solid var(--b3-theme-border);
     border-radius: 4px;
     background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+  }
+
+  .filter-sql {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 4px;
+    padding: 8px 10px;
+    font-size: 13px;
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 6px;
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    resize: vertical;
+  }
+
+  .sql-examples-block {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 6px;
+    background: var(--b3-theme-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .sql-example-item {
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 6px;
+    padding: 8px;
+    background: var(--b3-theme-background);
+  }
+
+  .sql-example-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  .sql-example-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .sql-example-item code {
+    display: block;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 4px;
+    padding: 6px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .copy-btn {
+    border: 1px solid var(--b3-theme-border);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+
+  .copy-btn.danger {
+    color: var(--b3-theme-error);
+  }
+
+  .sql-example-tip {
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .sql-example-tip ul {
+    padding-left: 16px;
+    margin: 4px 0 0 0;
+  }
+
+  .sql-example-add {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
   }
 
   .selector-wrapper {
@@ -1122,7 +1408,7 @@
     font-size: 13px;
     color: var(--b3-theme-on-surface);
     border: 1px solid var(--b3-theme-border);
-    background: var(--b3-theme-background);
+    background: var(--b3-theme-surface);
     border-radius: 4px;
     text-align: left;
     cursor: pointer;
@@ -1140,6 +1426,7 @@
     z-index: 10;
     max-height: 240px;
     overflow-y: auto;
+    color: var(--b3-theme-on-surface);
   }
 
   .dropdown-item {
@@ -1148,6 +1435,7 @@
     padding: 8px 12px;
     font-size: 13px;
     gap: 8px;
+    color: var(--b3-theme-on-surface);
   }
 
   .dropdown-item:hover {
@@ -1168,6 +1456,7 @@
     background: var(--b3-theme-background);
     border-radius: 4px;
     cursor: pointer;
+    color: var(--b3-theme-on-surface);
   }
 
   .action-section {
@@ -1192,17 +1481,13 @@
     cursor: not-allowed;
   }
 
-  .secondary-actions {
-    display: flex;
-    gap: 8px;
-  }
-
   .secondary-button {
     flex: 1;
     padding: 8px 12px;
     border: 1px solid var(--b3-theme-border);
     border-radius: 6px;
-    background: var(--b3-theme-background);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
     cursor: pointer;
   }
 
@@ -1256,7 +1541,17 @@
     border: 1px solid var(--b3-theme-border);
     border-radius: 6px;
     padding: 8px 10px;
-    background: var(--b3-theme-background);
+    background: var(--b3-theme-surface);
+  }
+
+  .priority-list li.dragging {
+    opacity: 0.65;
+    border-color: var(--b3-theme-primary);
+  }
+
+  .priority-list li.drag-over {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 1px var(--b3-theme-primary);
   }
 
   .priority-main {
