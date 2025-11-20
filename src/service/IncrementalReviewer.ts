@@ -953,123 +953,123 @@ class IncrementalReviewer {
    * @param docIds 文档ID列表
    * @returns 文档优先级列表
    */
+
+
   public async batchGetDocumentPriorities(docIds: string[]): Promise<{ docId: string, priority: number }[]> {
     const batchSize = 5000 // 每批查询5000个文档
-    const allResults: { docId: string, priority: number }[] = []
+    const allResults: { docId: string, priority: number | null }[] = []
+    const missingDocIds: string[] = []
     let hasMissingPriority = false
-    
+
     this.pluginInstance.logger.info(`开始批量查询 ${docIds.length} 个文档的优先级属性`)
-    
+
     // 分批查询文档的priority属性
     for (let i = 0; i < docIds.length; i += batchSize) {
       const batchIds = docIds.slice(i, i + batchSize)
-      this.pluginInstance.logger.info(`查询第 ${Math.floor(i/batchSize) + 1}/${Math.ceil(docIds.length/batchSize)} 批文档，共 ${batchIds.length} 个`)
-      
+      this.pluginInstance.logger.info(`查询第 ${Math.floor(i / batchSize) + 1}/${Math.ceil(docIds.length / batchSize)} 批文档，共 ${batchIds.length} 个`)
+
       try {
         // 使用批量API查询一批文档的属性
         const batchAttrsResults = await this.pluginInstance.kernelApi.batchGetBlockAttrs(batchIds)
-        
+
         // 处理批量查询结果
         const batchResults = batchIds.map((docId, index) => {
           try {
             const attrsResult = batchAttrsResults[index]
             if (attrsResult && attrsResult.code === 0) {
               const data = attrsResult.data || attrsResult
-              const priorityValue = data['custom-priority']
-              
-              if (!priorityValue || priorityValue === '' || isNaN(parseFloat(priorityValue))) {
+              const priorityValue = data["custom-priority"]
+
+              if (!priorityValue || priorityValue === "" || isNaN(parseFloat(priorityValue))) {
                 // 发现缺失的优先级
                 hasMissingPriority = true
+                missingDocIds.push(docId)
                 this.pluginInstance.logger.warn(`文档 ${docId} 的priority属性缺失或无效: ${priorityValue}`)
                 return { docId, priority: null }
               }
-              
+
               return { docId, priority: parseFloat(priorityValue) }
             } else {
-              this.pluginInstance.logger.error(`查询文档 ${docId} 的priority属性失败: ${attrsResult?.msg || 'unknown error'}`)
+              this.pluginInstance.logger.error(`查询文档 ${docId} 的priority属性失败: ${attrsResult?.msg || "unknown error"}`)
               hasMissingPriority = true
+              missingDocIds.push(docId)
               return { docId, priority: null }
             }
           } catch (err) {
             this.pluginInstance.logger.error(`处理文档 ${docId} 的priority属性结果失败`, err)
             hasMissingPriority = true
+            missingDocIds.push(docId)
             return { docId, priority: null }
           }
         })
-        
+
         allResults.push(...batchResults)
-        
+
         // 更新进度提示
         if (docIds.length > 5000 && i % (batchSize * 2) === 0) {
           showMessage(`正在查询文档优先级 ${allResults.length}/${docIds.length}`, 1000, "info")
         }
       } catch (err) {
-        this.pluginInstance.logger.error(`批量查询第 ${Math.floor(i/batchSize) + 1} 批文档属性失败，回退到单个查询`, err)
-        
+        this.pluginInstance.logger.error(`批量查询第 ${Math.floor(i / batchSize) + 1} 批文档属性失败，回退到单个查询`, err)
+
         // 批量查询失败时，回退到单个查询
         const fallbackResults = await Promise.all(
           batchIds.map(async (docId) => {
             try {
               const attrs = await this.pluginInstance.kernelApi.getBlockAttrs(docId)
               const data = attrs.data || attrs
-              const priorityValue = data['custom-priority']
-              
-              if (!priorityValue || priorityValue === '' || isNaN(parseFloat(priorityValue))) {
+              const priorityValue = data["custom-priority"]
+
+              if (!priorityValue || priorityValue === "" || isNaN(parseFloat(priorityValue))) {
                 hasMissingPriority = true
+                missingDocIds.push(docId)
                 this.pluginInstance.logger.warn(`文档 ${docId} 的priority属性缺失或无效: ${priorityValue}`)
                 return { docId, priority: null }
               }
-              
+
               return { docId, priority: parseFloat(priorityValue) }
             } catch (err) {
               this.pluginInstance.logger.error(`查询文档 ${docId} 的priority属性失败`, err)
               hasMissingPriority = true
+              missingDocIds.push(docId)
               return { docId, priority: null }
             }
           })
         )
-        
+
         allResults.push(...fallbackResults)
       }
     }
-    
-    // 如果发现任何缺失的优先级，立即执行修复
-    if (hasMissingPriority) {
-      this.pluginInstance.logger.warn("发现缺失的优先级属性，开始执行自动修复...")
-      showMessage("检测到文档优先级数据不完整，正在自动修复...", 3000, "info")
-      
-      try {
-        // 调用修复函数
-        const repairResult = await this.repairAllDocumentMetrics()
-        this.pluginInstance.logger.info(
-          `优先级修复完成: 处理了${repairResult.totalDocs}篇文档，` +
-          `更新了${repairResult.updatedDocs}篇，重新计算了${repairResult.updatedPriorities}个优先级`
-        )
-        showMessage(`优先级数据修复完成，重新计算了${repairResult.updatedPriorities}个文档的优先级`, 3000, "info")
-        
-        // 修复完成后，重新查询所有文档的优先级
-        this.pluginInstance.logger.info("修复完成，重新查询文档优先级...")
-        return await this.batchGetDocumentPriorities(docIds)
-        
-      } catch (repairError) {
-        this.pluginInstance.logger.error("自动修复优先级数据失败", repairError)
-        showMessage(`自动修复失败: ${repairError.message}`, 5000, "error")
-        
-        // 修复失败时，返回带默认值的结果
-        return allResults.map(result => ({
-          docId: result.docId,
-          priority: result.priority !== null ? result.priority : 5.0
-        }))
+
+    // 仅修复缺失优先级的文档，避免全库遍历
+    if (hasMissingPriority && missingDocIds.length > 0) {
+      this.pluginInstance.logger.warn(`发现 ${missingDocIds.length} 篇文档缺失优先级，逐个修复...`)
+      showMessage(`检测到 ${missingDocIds.length} 篇文档优先级缺失，正在修复...`, 3000, "info")
+
+      for (let i = 0; i < allResults.length; i++) {
+        const result = allResults[i]
+        if (result.priority !== null) continue
+
+        try {
+          const docData = await this.getDocPriorityData(result.docId)
+          const { priority } = await this.calculatePriority(docData)
+          await this.updateDocPriority(result.docId, priority)
+          allResults[i] = { docId: result.docId, priority }
+          this.pluginInstance.logger.info(`已修复文档 ${result.docId} 的优先级: ${priority.toFixed(4)}`)
+        } catch (repairError) {
+          this.pluginInstance.logger.error(`修复文档 ${result.docId} 的优先级失败`, repairError)
+          // 使用默认值，避免后续逻辑被阻塞
+          allResults[i] = { docId: result.docId, priority: 5.0 }
+        }
       }
     }
-    
-    // 过滤掉null值（理论上不应该有，但为了安全起见）
+
+    // 过滤掉 null 值（理论上不应该有，但作为保护）
     const validResults = allResults.filter(result => result.priority !== null) as { docId: string, priority: number }[]
-    
-    this.pluginInstance.logger.info(`成功查询到 ${validResults.length} 个文档的优先级属性`)
+
+    this.pluginInstance.logger.info(`成功查询了 ${validResults.length} 个文档的优先级属性`)
     return validResults
   }
-
   /**
    * 4.4 更新文档的优先级属性
    * 直接设置文档的custom-priority属性

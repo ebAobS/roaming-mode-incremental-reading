@@ -182,8 +182,23 @@
         </div>
     </div>
     <!-- Recent Updates -->
-    <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
+<div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Recent Updates</h2>
+
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v3.1.0 Update (2025.11.21)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🆕 New Features</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li><strong>🧭 Sidebar-first roaming</strong>: The dedicated incremental reading roam page is now integrated into the sidebar, so you can browse and edit directly in the source document</li>
+</ul>
+</li>
+<li style="margin: 0.3em 0;"><strong style="color: #ef4444;">🐛 Bug Fixes</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li><strong>⚡ Priority auto-repair</strong>: Improved efficiency when auto-fixing document priorities during roaming</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
 
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v3.0.3 Update (2025.9.28)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">

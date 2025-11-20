@@ -812,7 +812,7 @@
         <div class="tip-text">{probabilityTip}</div>
       </div>
 
-      <div class="section">
+      <div class="section filter-section">
         <div class="section-title">筛选文档</div>
         <div class="filter-row">
           <span class="filter-label">筛选</span>
@@ -1282,6 +1282,11 @@
     padding: 12px;
     background: var(--b3-theme-surface);
   }
+  .filter-section {
+    border: 1px solid var(--b3-theme-primary-lightest, var(--b3-theme-border));
+    background: linear-gradient(180deg, var(--b3-theme-background) 0%, var(--b3-theme-surface) 100%);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  }
 
   .section-title {
     font-weight: 600;
@@ -1292,6 +1297,14 @@
   .filter-row {
     margin-bottom: 8px;
     position: relative;
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: var(--b3-theme-surface);
+  }
+
+  .filter-row + .filter-row {
+    margin-top: 10px;
   }
 
   .filter-label {
@@ -1304,9 +1317,9 @@
     width: 100%;
     padding: 6px 8px;
     font-size: 13px;
-    border: 1px solid var(--b3-theme-border);
-    border-radius: 4px;
-    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-primary-lightest, var(--b3-theme-border));
+    border-radius: 6px;
+    background: var(--b3-theme-background);
     color: var(--b3-theme-on-surface);
   }
 
@@ -1407,11 +1420,19 @@
     padding: 8px 10px;
     font-size: 13px;
     color: var(--b3-theme-on-surface);
-    border: 1px solid var(--b3-theme-border);
-    background: var(--b3-theme-surface);
-    border-radius: 4px;
+    border: 1px solid var(--b3-theme-primary-lightest, var(--b3-theme-border));
+    background: linear-gradient(180deg, var(--b3-theme-background) 0%, var(--b3-theme-surface) 100%);
+    border-radius: 6px;
     text-align: left;
     cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .filter-button:hover {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: var(--b3-theme-surface);
   }
 
   .dropdown-list {
@@ -1419,10 +1440,10 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-theme-border);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-theme-primary-lightest, var(--b3-theme-border));
+    border-radius: 8px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
     z-index: 10;
     max-height: 240px;
     overflow-y: auto;
@@ -1447,6 +1468,7 @@
     gap: 8px;
     padding: 8px;
     border-top: 1px solid var(--b3-theme-border);
+    background: var(--b3-theme-surface);
   }
 
   .confirm-btn {
@@ -1533,25 +1555,33 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--b3-theme-surface);
   }
 
   .priority-list li,
   .visited-list li {
-    border: 1px solid var(--b3-theme-border);
-    border-radius: 6px;
-    padding: 8px 10px;
+    border: none;
+    border-bottom: 1px solid var(--b3-theme-border);
+    padding: 10px 12px;
     background: var(--b3-theme-surface);
   }
 
+  .priority-list li:last-child,
+  .visited-list li:last-child {
+    border-bottom: none;
+  }
+
   .priority-list li.dragging {
-    opacity: 0.65;
-    border-color: var(--b3-theme-primary);
+    opacity: 0.85;
+    background: var(--b3-theme-hover);
   }
 
   .priority-list li.drag-over {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 1px var(--b3-theme-primary);
+    box-shadow: inset 0 0 0 1px var(--b3-theme-primary);
   }
 
   .priority-main {
