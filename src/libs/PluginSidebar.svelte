@@ -708,6 +708,30 @@
     openTab({ app: pluginInstance.app, doc: { id: docId } })
   }
 
+  const openRecommendationDoc = async (docId: string) => {
+    try {
+      const reviewer = await ensureReviewer()
+      currentRndId = docId
+      if (storeConfig) {
+        ;(storeConfig as any).currentRndId = docId
+        await pluginInstance.saveData(storeName, storeConfig)
+      }
+      await refreshCurrentDocMetrics()
+      await reviewer.recordVisitAndRoam(docId)
+      await refreshPriorityBarPoints()
+      if (activeTab === 2) {
+        await loadPriorityList()
+      }
+      if (activeTab === 3) {
+        await loadVisitedDocs()
+      }
+      await openTab({ app: pluginInstance.app, doc: { id: docId } })
+    } catch (error: any) {
+      pluginInstance.logger.error("打开推荐文档失败", error)
+      showMessage("打开推荐文档失败: " + (error?.message || error), 3000, "error")
+    }
+  }
+
   const doIncrementalRandomDoc = async () => {
     storeConfig = await pluginInstance.safeLoad(storeName)
     if (storeConfig.filterMode === FilterMode.SQL && (!storeConfig.sqlQuery || storeConfig.sqlQuery.trim() === "")) {
@@ -1053,39 +1077,7 @@
       </div>
 
       <div class="section recommendation-section">
-        <div class="section-title">智能推荐 · 漫游上下文</div>
-        <div class="recommend-config">
-          <label>
-            最近漫游N篇
-            <input
-              type="number"
-              min="1"
-              max="30"
-              bind:value={recommendRecentCount}
-              on:change={onRecommendationConfigChange}
-            />
-          </label>
-          <label>
-            漫游次数最多M篇
-            <input
-              type="number"
-              min="1"
-              max="30"
-              bind:value={recommendTopCount}
-              on:change={onRecommendationConfigChange}
-            />
-          </label>
-          <label>
-            推荐条数
-            <input
-              type="number"
-              min="3"
-              max="30"
-              bind:value={recommendTopK}
-              on:change={onRecommendationConfigChange}
-            />
-          </label>
-        </div>
+        <div class="section-title">智能推荐</div>
         <div class="toolbar-row">
           <button class="secondary-button" on:click={refreshRecommendations} disabled={recommendLoading}>
             {recommendLoading ? "生成中..." : "刷新推荐"}
@@ -1104,8 +1096,8 @@
                     class="recommend-title"
                     role="button"
                     tabindex="0"
-                    on:click={() => openDoc(item.id)}
-                    on:keydown={(e) => e.key === "Enter" && openDoc(item.id)}
+                    on:click={() => openRecommendationDoc(item.id)}
+                    on:keydown={(e) => e.key === "Enter" && openRecommendationDoc(item.id)}
                   >
                     {item.title}
                   </span>

@@ -1462,6 +1462,16 @@ class IncrementalReviewer {
       return undefined
     }
   }
+
+  /**
+   * 6.9.1 公开方法：同时记录漫游与访问（推荐入口复用）
+   * - roaming-count 自增，roaming-last 更新
+   * - visit-count 自增（首次即置为1）
+   */
+  public async recordVisitAndRoam(docId: string): Promise<void> {
+    await this.updateVisitCount(docId)
+    await this.incrementRoamingCount(docId)
+  }
   
   /**
    * 7. 工具方法

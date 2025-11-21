@@ -47,7 +47,14 @@
   let clearDataCurrent = 0;
 
   let activeTab = 0;
-  const tabList = ["基本配置", "文档指标配置", "批量优先级重置"];
+  const tabList = ["基本配置", "文档指标配置", "批量优先级重置", "智能推荐设置"];
+
+  // 推荐配置
+  let recommendRecentCount = 3
+  let recommendTopCount = 2
+  let recommendTopK = 8
+  let recommendMaxCandidates = 120
+  let recommendMaxParagraphs = 8
 
   const onSaveSetting = async () => {
     try {
@@ -56,6 +63,11 @@
       storeConfig.autoResetOnStartup = autoResetOnStartup
       storeConfig.absolutePriorityProb = Math.max(0, Math.min(1, Number(absolutePriorityProb)))
       storeConfig.enableDebugLog = enableDebugLog
+      storeConfig.recentAnchorCount = Number(recommendRecentCount) || 1
+      storeConfig.topAnchorCount = Number(recommendTopCount) || 1
+      storeConfig.recommendTopK = Number(recommendTopK) || 3
+      storeConfig.recommendMaxCandidates = Number(recommendMaxCandidates) || 50
+      storeConfig.recommendMaxParagraphs = Number(recommendMaxParagraphs) || 8
       await pluginInstance.saveData(storeName, storeConfig)
       pluginInstance.setDebugLogEnabled(enableDebugLog)
       
@@ -390,6 +402,11 @@
     autoResetOnStartup = storeConfig?.autoResetOnStartup ?? false
     absolutePriorityProb = typeof storeConfig?.absolutePriorityProb === 'number' ? storeConfig.absolutePriorityProb : 0;
     enableDebugLog = storeConfig?.enableDebugLog ?? false;
+    recommendRecentCount = storeConfig?.recentAnchorCount ?? 3
+    recommendTopCount = storeConfig?.topAnchorCount ?? 2
+    recommendTopK = storeConfig?.recommendTopK ?? 8
+    recommendMaxCandidates = storeConfig?.recommendMaxCandidates ?? 120
+    recommendMaxParagraphs = storeConfig?.recommendMaxParagraphs ?? 8
       
     // 如果当前是渐进模式，初始化渐进配置
     if (reviewMode === "incremental") {
@@ -674,6 +691,82 @@
                   {/if}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    {#if activeTab === 3}
+      <!-- 智能推荐设置 -->
+      <div class="fn__block form-item incremental-config-section">
+        <div class="config-section">
+          <h4>基准文档选择</h4>
+          <div class="form-row align-center">
+            <div class="form-group">
+              <label>最近漫游 N 篇</label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                bind:value={recommendRecentCount}
+                disabled={$isLocked}
+                readonly={$isLocked}
+              />
+              <p class="help-text">按 custom-roaming-last 排序，取最新 N 篇</p>
+            </div>
+            <div class="form-group">
+              <label>漫游次数最多 M 篇</label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                bind:value={recommendTopCount}
+                disabled={$isLocked}
+                readonly={$isLocked}
+              />
+              <p class="help-text">按 custom-roaming-count 排序，取次数最多的 M 篇</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>候选与输出</h4>
+          <div class="form-row align-center">
+            <div class="form-group">
+              <label>推荐条数</label>
+              <input
+                type="number"
+                min="3"
+                max="50"
+                bind:value={recommendTopK}
+                disabled={$isLocked}
+                readonly={$isLocked}
+              />
+            </div>
+            <div class="form-group">
+              <label>候选集上限</label>
+              <input
+                type="number"
+                min="20"
+                max="500"
+                bind:value={recommendMaxCandidates}
+                disabled={$isLocked}
+                readonly={$isLocked}
+              />
+              <p class="help-text">限制参与相似度计算的最大文档数，避免计算过重</p>
+            </div>
+            <div class="form-group">
+              <label>采样段落上限</label>
+              <input
+                type="number"
+                min="3"
+                max="20"
+                bind:value={recommendMaxParagraphs}
+                disabled={$isLocked}
+                readonly={$isLocked}
+              />
+              <p class="help-text">标题 + 头段 + 中段 + 尾段合计不超过该值</p>
             </div>
           </div>
         </div>
