@@ -10,6 +10,7 @@
   import { storeName } from "../Constants"
   import RandomDocConfig, { FilterMode, ReviewMode } from "../models/RandomDocConfig"
   import IncrementalReviewer from "../service/IncrementalReviewer"
+  import RecommendationService, { buildRecommendationConfig } from "../service/RecommendationService"
   import { showSettingMenu } from "../topbar"
   import { icons } from "../utils/svg"
   import MetricsPanel from "./MetricsPanel.svelte"
@@ -81,6 +82,17 @@
   let draggedIndex = -1
   let dragOverIndex = -1
 
+  // 推荐相关状态
+  let recommendationService: RecommendationService | null = null
+  let recommendLoading = false
+  let recommendations: Array<{ id: string; title: string; score: number; anchors: string[] }> = []
+  let recommendError = ""
+  let recommendRecentCount = 3
+  let recommendTopCount = 2
+  let recommendTopK = 8
+  let recommendMaxCandidates = 120
+  let recommendMaxParagraphs = 8
+
   $: currentDocTitle = (() => {
     if (!rootId) {
       return "请选择文档"
@@ -131,9 +143,71 @@
     return pr
   }
 
+  const ensureRecommendationService = () => {
+    if (!recommendationService) {
+      recommendationService = new RecommendationService(pluginInstance)
+    }
+    return recommendationService
+  }
+
   const resetAllVisitCounts = async () => {
     const reviewer = await ensureReviewer()
     await reviewer.resetVisited()
+  }
+
+  const syncRecommendationConfig = () => {
+    const cfg = buildRecommendationConfig(storeConfig)
+    recommendRecentCount = cfg.recentAnchorCount
+    recommendTopCount = cfg.topAnchorCount
+    recommendTopK = cfg.topK
+    recommendMaxCandidates = cfg.maxCandidates
+    recommendMaxParagraphs = cfg.maxParagraphs
+  }
+
+  const persistRecommendationConfig = async () => {
+    storeConfig.recentAnchorCount = recommendRecentCount
+    storeConfig.topAnchorCount = recommendTopCount
+    storeConfig.recommendTopK = recommendTopK
+    storeConfig.recommendMaxCandidates = recommendMaxCandidates
+    storeConfig.recommendMaxParagraphs = recommendMaxParagraphs
+    await pluginInstance.saveData(storeName, storeConfig)
+  }
+
+  const onRecommendationConfigChange = async () => {
+    recommendRecentCount = Number(recommendRecentCount) || 1
+    recommendTopCount = Number(recommendTopCount) || 1
+    recommendTopK = Number(recommendTopK) || 3
+    recommendMaxCandidates = Number(recommendMaxCandidates) || 50
+    recommendMaxParagraphs = Number(recommendMaxParagraphs) || 8
+    await persistRecommendationConfig()
+    await refreshRecommendations()
+  }
+
+  const refreshRecommendations = async () => {
+    recommendLoading = true
+    recommendError = ""
+    try {
+      const reviewer = await ensureReviewer()
+      const service = ensureRecommendationService()
+      const cfg = buildRecommendationConfig(storeConfig)
+      cfg.recentAnchorCount = recommendRecentCount
+      cfg.topAnchorCount = recommendTopCount
+      cfg.topK = recommendTopK
+      cfg.maxCandidates = recommendMaxCandidates
+      cfg.maxParagraphs = recommendMaxParagraphs
+      recommendations = await service.getRecommendations({
+        reviewer,
+        config: cfg
+      })
+      if (recommendations.length === 0) {
+        recommendError = "暂无推荐，请先多漫游几篇文档"
+      }
+    } catch (error: any) {
+      pluginInstance.logger.error("刷新推荐失败", error)
+      recommendError = error?.message || "推荐失败"
+    } finally {
+      recommendLoading = false
+    }
   }
 
   const onFilterModeChange = async () => {
@@ -722,6 +796,7 @@
       if (activeTab === 3) {
         await loadVisitedDocs()
       }
+      await refreshRecommendations()
 
       await openTab({ app: pluginInstance.app, doc: { id: currentRndId } })
     } catch (error: any) {
@@ -741,6 +816,7 @@
       storeConfig.reviewMode = ReviewMode.Incremental
       await pluginInstance.saveData(storeName, storeConfig)
     }
+    syncRecommendationConfig()
 
     const res = await pluginInstance.kernelApi.lsNotebooks()
     notebooks = (res?.data as any)?.notebooks ?? []
@@ -783,6 +859,7 @@
       }
     }
     await loadSqlExamples()
+    await refreshRecommendations()
   })
 </script>
 
@@ -973,6 +1050,75 @@
             继续漫游
           {/if}
         </button>
+      </div>
+
+      <div class="section recommendation-section">
+        <div class="section-title">智能推荐 · 漫游上下文</div>
+        <div class="recommend-config">
+          <label>
+            最近漫游N篇
+            <input
+              type="number"
+              min="1"
+              max="30"
+              bind:value={recommendRecentCount}
+              on:change={onRecommendationConfigChange}
+            />
+          </label>
+          <label>
+            漫游次数最多M篇
+            <input
+              type="number"
+              min="1"
+              max="30"
+              bind:value={recommendTopCount}
+              on:change={onRecommendationConfigChange}
+            />
+          </label>
+          <label>
+            推荐条数
+            <input
+              type="number"
+              min="3"
+              max="30"
+              bind:value={recommendTopK}
+              on:change={onRecommendationConfigChange}
+            />
+          </label>
+        </div>
+        <div class="toolbar-row">
+          <button class="secondary-button" on:click={refreshRecommendations} disabled={recommendLoading}>
+            {recommendLoading ? "生成中..." : "刷新推荐"}
+          </button>
+        </div>
+        {#if recommendLoading}
+          <div class="placeholder">正在计算相似文档...</div>
+        {:else if recommendations.length === 0}
+          <div class="placeholder">{recommendError || "暂无推荐，请多漫游几篇试试"}</div>
+        {:else}
+          <ul class="recommend-list">
+            {#each recommendations as item}
+              <li>
+                <div class="recommend-main">
+                  <span
+                    class="recommend-title"
+                    role="button"
+                    tabindex="0"
+                    on:click={() => openDoc(item.id)}
+                    on:keydown={(e) => e.key === "Enter" && openDoc(item.id)}
+                  >
+                    {item.title}
+                  </span>
+                  <span class="recommend-score">{(item.score * 100).toFixed(1)}%</span>
+                </div>
+                <div class="recommend-sub">
+                  <span>基准 {item.anchors.length} 篇</span>
+                  <span class="recommend-id">{item.id.slice(0, 6)}...</span>
+                </div>
+              </li>
+            {/each}
+          </ul>
+        {/if}
       </div>
     {:else if activeTab === 1}
       <div class="section">
@@ -1720,5 +1866,85 @@
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+  }
+
+  .recommendation-section {
+    margin-top: 8px;
+  }
+
+  .recommend-config {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .recommend-config label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .recommend-config input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 6px;
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+  }
+
+  .recommend-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--b3-theme-surface);
+  }
+
+  .recommend-list li {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--b3-theme-border);
+  }
+
+  .recommend-list li:last-child {
+    border-bottom: none;
+  }
+
+  .recommend-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .recommend-title {
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .recommend-score {
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.8;
+  }
+
+  .recommend-sub {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.85;
+  }
+
+  .recommend-id {
+    font-family: monospace;
   }
 </style>

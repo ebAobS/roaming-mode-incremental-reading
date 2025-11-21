@@ -123,6 +123,17 @@ class RandomDocConfig {
    */
   excludeVisited = true
 
+  /** 推荐 - 最近漫游基准文档数 */
+  public recentAnchorCount: number = 3
+  /** 推荐 - 漫游次数最多的基准文档数 */
+  public topAnchorCount: number = 2
+  /** 推荐 - 返回条数 */
+  public recommendTopK: number = 8
+  /** 推荐 - 最大候选数 */
+  public recommendMaxCandidates: number = 120
+  /** 推荐 - 采样段落数上限 */
+  public recommendMaxParagraphs: number = 8
+
   /**
    * 2.12 是否在启动时自动重置已访问文档记录
    * 控制是否在每次启动时自动清空已访问文档记录
@@ -146,6 +157,11 @@ class RandomDocConfig {
     this.autoResetOnStartup = this.autoResetOnStartup ?? false
     this.absolutePriorityProb = this.absolutePriorityProb ?? 0
     this.enableDebugLog = this.enableDebugLog ?? false
+    this.recentAnchorCount = this.recentAnchorCount ?? 3
+    this.topAnchorCount = this.topAnchorCount ?? 2
+    this.recommendTopK = this.recommendTopK ?? 8
+    this.recommendMaxCandidates = this.recommendMaxCandidates ?? 120
+    this.recommendMaxParagraphs = this.recommendMaxParagraphs ?? 8
   }
 
   /**
