@@ -57,6 +57,17 @@ class IncrementalReviewer {
   private pluginInstance: RandomDocPlugin
   /** 1.3 渐进式阅读配置 */
   private incrementalConfig: IncrementalConfig
+  /** 1.4 调试日志函数包装 */
+  private debugLog(...args: any[]) {
+    if (this.pluginInstance.isDebugLogEnabled()) {
+      console.log(...args)
+    }
+  }
+  private debugError(...args: any[]) {
+    if (this.pluginInstance.isDebugLogEnabled()) {
+      console.error(...args)
+    }
+  }
 
   /**
    * 1.4 构造函数
@@ -1511,20 +1522,20 @@ class IncrementalReviewer {
         this.pluginInstance.logger.info(`根文档模式但无根文档ID，不应用过滤条件`)
       }
     } else if (filterMode === FilterMode.Tag) {
-      console.log("🏷️ 进入标签过滤模式")
-      console.log("📋 传入的tags参数:", tags)
-      console.log("🔍 tags类型:", typeof tags)
-      console.log("📊 Array.isArray(tags):", Array.isArray(tags))
+      this.debugLog("🏷️ 进入标签过滤模式")
+      this.debugLog("📋 传入的tags参数:", tags)
+      this.debugLog("🔍 tags类型:", typeof tags)
+      this.debugLog("📊 Array.isArray(tags):", Array.isArray(tags))
       
       // 标签模式 - 仅当有标签时应用过滤
       if (tags && Array.isArray(tags) && tags.length > 0) {
-        console.log("✅ 标签数组非空，开始处理")
+        this.debugLog("✅ 标签数组非空，开始处理")
         // 直接使用数组，不需要split操作
         const tagList = tags.filter(tag => tag && tag.trim().length > 0)
-        console.log("🧹 过滤后的标签列表:", tagList)
+        this.debugLog("🧹 过滤后的标签列表:", tagList)
         
         if (tagList.length > 0) {
-          console.log("🔨 开始构建标签条件")
+          this.debugLog("🔨 开始构建标签条件")
           // 找到包含指定标签的文档（通过root_id关联）
           // 标签格式：#标签名#
           const tagConditions = tagList.map(tag => {
@@ -1537,29 +1548,29 @@ class IncrementalReviewer {
               formattedTag = formattedTag + '#'
             }
             const sqlCondition = `id IN (SELECT DISTINCT root_id FROM blocks WHERE tag = '${formattedTag}' AND root_id IS NOT NULL AND root_id != '')`
-            console.log(`🎯 标签 "${tag}" → 格式化为 "${formattedTag}" → SQL: ${sqlCondition}`)
+            this.debugLog(`🎯 标签 "${tag}" → 格式化为 "${formattedTag}" → SQL: ${sqlCondition}`)
             return sqlCondition
           })
           condition = `AND (${tagConditions.join(' OR ')})`
-          console.log("🏗️ 最终标签筛选条件:", condition)
+          this.debugLog("🏗️ 最终标签筛选条件:", condition)
           this.pluginInstance.logger.info(`应用标签过滤(OR逻辑)，查找包含任一标签的文档，标签列表: ${tagList.join(', ')}`)
         } else {
-          console.log("⚠️ 标签模式但过滤后标签列表为空")
+          this.debugLog("⚠️ 标签模式但过滤后标签列表为空")
           this.pluginInstance.logger.info(`标签模式但标签列表为空，显示所有文档`)
         }
       } else {
-        console.log("❌ 标签模式但无有效标签内容")
-        console.log("📋 tags:", tags)
+        this.debugLog("❌ 标签模式但无有效标签内容")
+        this.debugLog("📋 tags:", tags)
         this.pluginInstance.logger.info(`标签模式但无标签内容，显示所有文档`)
       }
     } else if (filterMode === FilterMode.SQL) {
-      console.log("🔍 进入SQL筛选过滤模式")
+      this.debugLog("🔍 进入SQL筛选过滤模式")
       const sqlQuery = targetConfig.sqlQuery || ""
-      console.log("📋 SQL查询语句:", sqlQuery)
+      this.debugLog("📋 SQL查询语句:", sqlQuery)
       
       // SQL模式 - 仅当有SQL查询语句时应用过滤
       if (sqlQuery && sqlQuery.trim().length > 0) {
-        console.log("✅ SQL查询语句非空，开始处理")
+        this.debugLog("✅ SQL查询语句非空，开始处理")
         // 执行SQL查询获取文档ID列表
         try {
           const sqlResult = await this.pluginInstance.kernelApi.sql(sqlQuery.trim())
@@ -1572,28 +1583,28 @@ class IncrementalReviewer {
             }).filter(id => id && typeof id === 'string')
             
             if (docIds.length > 0) {
-              console.log(`🎯 SQL查询返回 ${docIds.length} 个文档ID:`, docIds.slice(0, 5))
+              this.debugLog(`🎯 SQL查询返回 ${docIds.length} 个文档ID:`, docIds.slice(0, 5))
               // 构建IN条件，限制在这些文档ID范围内
               const quotedIds = docIds.map(id => `'${id}'`).join(',')
               condition = `AND id IN (${quotedIds})`
-              console.log("🏗️ 最终SQL筛选条件:", condition)
+              this.debugLog("🏗️ 最终SQL筛选条件:", condition)
               this.pluginInstance.logger.info(`应用SQL筛选，查询返回 ${docIds.length} 个文档`)
             } else {
-              console.log("⚠️ SQL查询结果中没有有效的文档ID")
+              this.debugLog("⚠️ SQL查询结果中没有有效的文档ID")
               this.pluginInstance.logger.info(`SQL查询结果中没有有效的文档ID，显示所有文档`)
             }
           } else {
-            console.log("⚠️ SQL查询没有返回数据")
+            this.debugLog("⚠️ SQL查询没有返回数据")
             this.pluginInstance.logger.info(`SQL查询没有返回数据，显示所有文档`)
           }
         } catch (error) {
-          console.error("❌ SQL查询执行失败:", error)
+          this.debugError("❌ SQL查询执行失败:", error)
           this.pluginInstance.logger.error(`SQL查询执行失败: ${error.message}`)
           // SQL查询失败时抛出错误，让上层处理
           throw new Error(`SQL查询执行失败: ${error.message}`)
         }
       } else {
-        console.log("❌ SQL模式但无SQL查询语句")
+        this.debugLog("❌ SQL模式但无SQL查询语句")
         this.pluginInstance.logger.info(`SQL模式但无SQL查询语句，显示所有文档`)
       }
     }
@@ -1820,9 +1831,9 @@ class IncrementalReviewer {
       }
       
     } catch (error) {
-      console.error("❌ getAllAvailableTags 发生错误:", error)
-      console.error("❌ 错误详情:", error.message)
-      console.error("❌ 错误堆栈:", error.stack)
+      this.debugError("❌ getAllAvailableTags 发生错误:", error)
+      this.debugError("❌ 错误详情:", error.message)
+      this.debugError("❌ 错误堆栈:", error.stack)
       this.pluginInstance.logger.error("获取可用标签失败", error)
       return []
     }

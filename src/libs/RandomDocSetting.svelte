@@ -6,7 +6,7 @@
   import { showMessage, Dialog } from "siyuan"
   import IncrementalReviewer from "../service/IncrementalReviewer"
   import type { Metric } from "../models/IncrementalConfig"
-  import { isLocked, toggleLock, setLocked } from "../stores/lockStore"
+  import { isLocked, toggleLock } from "../stores/lockStore"
 
   // props
   export let pluginInstance: RandomDocPlugin
@@ -17,7 +17,7 @@
   let excludeVisited = true
   let autoResetOnStartup = false
   let absolutePriorityProb = 0;
-  let defaultLocked = false;
+  let enableDebugLog = false;
   
   // 渐进模式配置相关
   let reviewer: IncrementalReviewer
@@ -55,8 +55,9 @@
       storeConfig.excludeVisited = excludeVisited
       storeConfig.autoResetOnStartup = autoResetOnStartup
       storeConfig.absolutePriorityProb = Math.max(0, Math.min(1, Number(absolutePriorityProb)))
-      storeConfig.defaultLocked = defaultLocked
+      storeConfig.enableDebugLog = enableDebugLog
       await pluginInstance.saveData(storeName, storeConfig)
+      pluginInstance.setDebugLogEnabled(enableDebugLog)
       
       // 保存渐进配置
       if (reviewer) {
@@ -388,7 +389,7 @@
     excludeVisited = storeConfig?.excludeVisited !== false
     autoResetOnStartup = storeConfig?.autoResetOnStartup ?? false
     absolutePriorityProb = typeof storeConfig?.absolutePriorityProb === 'number' ? storeConfig.absolutePriorityProb : 0;
-    defaultLocked = storeConfig?.defaultLocked ?? false;
+    enableDebugLog = storeConfig?.enableDebugLog ?? false;
       
     // 如果当前是渐进模式，初始化渐进配置
     if (reviewMode === "incremental") {
@@ -454,14 +455,14 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <h4 class="setting-title">{pluginInstance.i18n.defaultLocked}</h4>
+              <h4 class="setting-title">{pluginInstance.i18n.enableDebugLog}</h4>
               <label>
                 <input
                   type="checkbox"
-                  bind:checked={defaultLocked}
+                  bind:checked={enableDebugLog}
                   disabled={$isLocked}
                 />
-                {pluginInstance.i18n.defaultLockedTip}
+                {pluginInstance.i18n.enableDebugLogTip}
               </label>
             </div>
           </div>

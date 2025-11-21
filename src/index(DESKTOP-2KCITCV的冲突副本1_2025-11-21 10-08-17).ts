@@ -55,10 +55,6 @@ import { icons } from "./utils/svg"
 export default class RandomDocPlugin extends Plugin {
   /** 1.1 插件日志记录器 */
   public logger
-  /** 1.1.1 日志底层实例 */
-  private baseLogger
-  /** 1.1.2 是否启用调试日志 */
-  private debugLogEnabled = false
   /** 1.2 是否为移动设备标志 */
   public isMobile: boolean
   /** 1.3 内核API封装，用于与思源内核交互 */
@@ -146,8 +142,7 @@ export default class RandomDocPlugin extends Plugin {
     super(options)
 
     // 1.7.1 初始化日志记录器
-    this.baseLogger = simpleLogger("index", "incremental-reading", isDev)
-    this.logger = this.createLoggerProxy()
+    this.logger = simpleLogger("index", "incremental-reading", isDev)
     // 1.7.2 检测前端环境
     const frontEnd = getFrontend()
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile"
@@ -160,9 +155,6 @@ export default class RandomDocPlugin extends Plugin {
    * 当插件被思源笔记加载时调用，用于初始化插件功能
    */
   async onload() {
-    const initConfig = await this.safeLoad(storeName)
-    this.setDebugLogEnabled(initConfig?.enableDebugLog === true)
-
     // 2.1 初始化顶栏按钮
     await initTopbar(this)
     // 2.2 注册插件命令（快捷键）
@@ -174,27 +166,35 @@ export default class RandomDocPlugin extends Plugin {
   }
 
   /**
-   * 2.1 插件卸载方法
-   * 当插件被关闭或应用退出时调用，用于清理资源
+   * 2.1 ?????????
+   * ??????????????????????????????????
    */
-  onunload() {
-    // 2.1.1 清理文档总数缓存
-    // IncrementalReviewer.clearAllCache() // 方法不存在，暂时注释
+  async onunload() {
+    // 2.1.1 ???????????????
+    // IncrementalReviewer.clearAllCache() // ?????????????????
     
-    // 2.1.2 清理浮动按钮
+    // 2.1.2 ???????????
     if (this.floatingButton) {
       import("./floatingButton").then(({ removeFloatingButton }) => {
         removeFloatingButton(this)
       })
     }
     
-    // 2.1.3 清理侧边栏面板
+    // 2.1.3 ????????????
     if (this.dockContentInstance) {
       this.dockContentInstance.$destroy()
       this.dockContentInstance = null
     }
     
-    this.logger.info("插件已卸载，缓存已清理")
+    // 2.1.4 ???????????
+    try {
+      await this.removeData(storeName)
+      this.logger.info(`???????: ${storeName}`)
+    } catch (error) {
+      this.logger.error("???????????:", error)
+    }
+    
+    this.logger.info("???????????????????")
   }
 
   // openSetting() {
@@ -220,42 +220,6 @@ export default class RandomDocPlugin extends Plugin {
     }
 
     return storeConfig
-  }
-
-  public setDebugLogEnabled(enabled: boolean) {
-    this.debugLogEnabled = !!enabled
-    if (this.kernelApi && typeof this.kernelApi.setDebugLogEnabled === "function") {
-      this.kernelApi.setDebugLogEnabled(this.debugLogEnabled)
-    }
-  }
-
-  public isDebugLogEnabled() {
-    return this.debugLogEnabled
-  }
-
-  private createLoggerProxy() {
-    return {
-      info: (...args: any[]) => {
-        if (this.debugLogEnabled) {
-          this.baseLogger.info(...args)
-        }
-      },
-      warn: (...args: any[]) => {
-        if (this.debugLogEnabled) {
-          this.baseLogger.warn(...args)
-        }
-      },
-      error: (...args: any[]) => {
-        if (this.debugLogEnabled) {
-          this.baseLogger.error(...args)
-        }
-      },
-      debug: (...args: any[]) => {
-        if (this.debugLogEnabled) {
-          this.baseLogger.debug(...args)
-        }
-      }
-    }
   }
 
   /**

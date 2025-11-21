@@ -48,9 +48,16 @@ export interface SiyuanData {
 
 export class BaseApi {
   protected logger
+  protected baseLogger
+  protected debugLogEnabled = false
 
   constructor() {
-    this.logger = simpleLogger("base-api", "random-doc", isDev)
+    this.baseLogger = simpleLogger("base-api", "random-doc", isDev)
+    this.logger = this.createLoggerProxy()
+  }
+
+  public setDebugLogEnabled(enabled: boolean) {
+    this.debugLogEnabled = !!enabled
   }
 
   /**
@@ -86,14 +93,14 @@ export class BaseApi {
       })
     }
 
-    if (isDev) {
+    if (this.debugLogEnabled) {
       this.logger.debug("开始向思源请求数据，reqUrl=>", reqUrl)
       this.logger.debug("开始向思源请求数据，fetchOps=>", fetchOps)
     }
 
     const response = await fetch(reqUrl, fetchOps)
     const resJson = (await response.json()) as SiyuanData
-    if (isDev) {
+    if (this.debugLogEnabled) {
       this.logger.debug("思源请求数据返回，resJson=>", resJson)
     }
     return resJson
@@ -117,7 +124,7 @@ export class BaseApi {
       return [result]
     }
 
-    if (isDev) {
+    if (this.debugLogEnabled) {
       this.logger.debug(`开始批量请求，共 ${requests.length} 个请求`)
     }
 
@@ -125,10 +132,35 @@ export class BaseApi {
     const promises = requests.map(request => this.siyuanRequest(request.url, request.data))
     const results = await Promise.all(promises)
 
-    if (isDev) {
+    if (this.debugLogEnabled) {
       this.logger.debug(`批量请求完成，返回 ${results.length} 个结果`)
     }
 
     return results
+  }
+
+  private createLoggerProxy() {
+    return {
+      info: (...args: any[]) => {
+        if (this.debugLogEnabled) {
+          this.baseLogger.info(...args)
+        }
+      },
+      warn: (...args: any[]) => {
+        if (this.debugLogEnabled) {
+          this.baseLogger.warn(...args)
+        }
+      },
+      error: (...args: any[]) => {
+        if (this.debugLogEnabled) {
+          this.baseLogger.error(...args)
+        }
+      },
+      debug: (...args: any[]) => {
+        if (this.debugLogEnabled) {
+          this.baseLogger.debug(...args)
+        }
+      }
+    }
   }
 }

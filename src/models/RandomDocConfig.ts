@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2025, ebAobS . All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,10 +27,10 @@
  * ========================================
  * 漫游式渐进阅读插件 - 配置模型
  * ========================================
- * 
+ *
  * 本文件定义了插件的主要配置模型，包括漫游模式、过滤器和其他运行时配置。
  * 这些配置被存储在思源笔记的数据存储中，用于控制插件的主要行为。
- * 
+ *
  * ## 文件结构
  * 1. 枚举定义 - 定义配置中使用的枚举类型
  * 2. 配置类 - 定义插件的主要配置模型
@@ -107,7 +107,7 @@ class RandomDocConfig {
 
   /**
    * 2.9 标签列表
-   * 当过滤模式为Tag时使用的标签数组，支持多选
+   * 当过滤模式为Tag时使用的标签数组，支持多个
    */
   tags: string[] = []
 
@@ -130,10 +130,10 @@ class RandomDocConfig {
   public autoResetOnStartup = false
 
   /**
-   * 2.15 默认上锁状态
-   * 控制编辑区默认是否上锁，true为默认上锁，false为默认解锁
+   * 2.13 调试日志开关
+   * 控制是否输出调试日志，默认关闭以避免性能影响
    */
-  public defaultLocked = false
+  public enableDebugLog = false
 
   /**
    * 2.13 构造函数
@@ -145,7 +145,7 @@ class RandomDocConfig {
     this.excludeVisited = this.excludeVisited !== false
     this.autoResetOnStartup = this.autoResetOnStartup ?? false
     this.absolutePriorityProb = this.absolutePriorityProb ?? 0
-    this.defaultLocked = this.defaultLocked ?? false
+    this.enableDebugLog = this.enableDebugLog ?? false
   }
 
   /**
