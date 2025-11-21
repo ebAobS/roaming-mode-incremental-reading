@@ -1,11 +1,11 @@
 /**
- * 移动端浮动按钮：快速触发侧边栏漫游或打开设置。
+ * 移动端浮动按钮：在手机端呼出侧边栏浮窗，触发漫游或打开设置。
  */
 
 import type RandomDocPlugin from "./index"
-import { showMessage } from "siyuan"
 import { icons } from "./utils/svg"
 import { showSettingMenu } from "./topbar"
+import MobileSidebarDialog from "./libs/MobileSidebarDialog.svelte"
 
 export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
   if (!pluginInstance.isMobile) {
@@ -45,16 +45,47 @@ export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
     button.style.boxShadow = "0 4px 20px rgba(102, 126, 234, 0.4)"
   })
 
-  const triggerRoam = () => {
-    const sidebar = pluginInstance.dockContentInstance
-    if (sidebar?.triggerRoam) {
-      sidebar.triggerRoam()
-    } else {
-      showMessage("侧边栏未就绪，请稍后重试", 3000, "error")
+  let dialogHost: HTMLElement | null = null
+
+  const destroyMobileDialog = () => {
+    if (pluginInstance.mobileDialog) {
+      try {
+        pluginInstance.mobileDialog.$destroy()
+      } catch (error) {
+        pluginInstance.logger.error("销毁移动端浮窗失败", error)
+      }
+      pluginInstance.mobileDialog = null
+    }
+    if (dialogHost) {
+      dialogHost.remove()
+      dialogHost = null
     }
   }
 
-  button.addEventListener("click", () => triggerRoam())
+  const openMobileDialog = () => {
+    if (pluginInstance.mobileDialog) {
+      return
+    }
+
+    const existingHost = document.getElementById("incremental-reading-mobile-dialog")
+    if (existingHost) {
+      existingHost.remove()
+    }
+
+    dialogHost = document.createElement("div")
+    dialogHost.id = "incremental-reading-mobile-dialog"
+    document.body.appendChild(dialogHost)
+
+    pluginInstance.mobileDialog = new MobileSidebarDialog({
+      target: dialogHost,
+      props: {
+        pluginInstance,
+        onClose: destroyMobileDialog,
+      },
+    })
+  }
+
+  button.addEventListener("click", openMobileDialog)
   button.addEventListener("contextmenu", (e) => {
     e.preventDefault()
     showSettingMenu(pluginInstance)
@@ -68,5 +99,17 @@ export function removeFloatingButton(pluginInstance: RandomDocPlugin) {
   if (pluginInstance.floatingButton) {
     pluginInstance.floatingButton.remove()
     pluginInstance.floatingButton = null
+  }
+  if (pluginInstance.mobileDialog) {
+    try {
+      pluginInstance.mobileDialog.$destroy()
+    } catch (error) {
+      pluginInstance.logger.error("销毁移动端浮窗失败", error)
+    }
+    pluginInstance.mobileDialog = null
+  }
+  const host = document.getElementById("incremental-reading-mobile-dialog")
+  if (host) {
+    host.remove()
   }
 }
