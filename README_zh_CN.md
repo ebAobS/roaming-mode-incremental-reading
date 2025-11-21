@@ -1,4 +1,47 @@
 <div class="sy__outline" style="max-width: 800px; margin: 0 auto;">
+    <style>
+        .sy__outline {
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #0f172a;
+            line-height: 1.65;
+        }
+        .sy__outline h1,
+        .sy__outline h2,
+        .sy__outline h3,
+        .sy__outline h4 {
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .sy__outline p,
+        .sy__outline li,
+        .sy__outline summary {
+            color: #0f172a;
+        }
+        .sy__outline code {
+            background: #eef2ff;
+            color: #312e81;
+            padding: 0.1em 0.4em;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .sy__outline details {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.9em 1em;
+            box-shadow: 0 6px 20px rgba(15,23,42,0.06);
+        }
+        .sy__outline details summary {
+            list-style: none;
+            font-weight: 600;
+        }
+        .sy__outline details summary::marker {
+            display: none;
+        }
+        .sy__outline details + details {
+            margin-top: 1em;
+        }
+    </style>
     <div style="text-align: center; padding: 2em; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px;">
         <h1 style="color: white; margin: 0; font-size: 2.2em;">📚 漫游式渐进阅读</h1>
         <div style="color: rgba(255,255,255,0.9); margin-top: 0.5em; font-size: 1.1em;">智能推荐算法驱动的渐进阅读插件，实现无压力的"稍后阅读"学习体验</div>
@@ -15,9 +58,6 @@
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #fbbf24; border-radius: 8px; box-shadow: 0 4px 12px rgba(245,158,11,0.15);">
         <h2 style="color: #d97706; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🤝 项目信息</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
-                <strong>基于项目</strong>：<a href="https://github.com/terwer/siyuan-plugin-random-doc.git" style="color: #d97706;">思源插件：文档漫游</a>（作者：<a href="https://github.com/terwer" style="color: #d97706;">terwer</a>）
-            </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
                 <strong>项目地址</strong>：<a href="https://github.com/ebAobS/roaming-mode-incremental-reading" style="color: #d97706;">GitHub Repository</a>
             </li>
@@ -46,14 +86,43 @@
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1px solid #bae6fd; border-radius: 8px; box-shadow: 0 4px 12px rgba(14,165,233,0.15);">
         <h2 style="color: #0ea5e9; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 核心功能</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #6366f1; box-shadow: 0 2px 4px rgba(99,102,241,0.08);">🎯 <strong>智能优先级推荐</strong> - 基于轮盘赌算法和绝对优先级顺序的混合推荐机制</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #8b5cf6; box-shadow: 0 2px 4px rgba(139,92,246,0.08);">⚖️ <strong>自定义指标权重</strong> - 用户可自定义文章难度、重要性、紧急程度等指标及权重</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #06b6d4; box-shadow: 0 2px 4px rgba(6,182,212,0.08);">📊 <strong>可视化优先级</strong> - 条带状点图清晰展示文档优先级，支持直接拖动调整</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">📁 <strong>灵活筛选</strong> - 支持多选笔记本和根文档筛选，精准定位学习范围</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #ef4444; box-shadow: 0 2px 4px rgba(239,68,68,0.08);">📝 <strong>实时调整</strong> - 阅读过程中可实时调整文章指标，动态优化推荐算法</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #8b5cf6; box-shadow: 0 2px 4px rgba(139,92,246,0.08);">📈 <strong>已漫游文档管理</strong> - 已漫游文档列表+热力图，支持批量调节优先级和拖动排序</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #6366f1; box-shadow: 0 2px 4px rgba(99,102,241,0.08);">📋 <strong>漫游历史追踪</strong> - 记录阅读历史、漫游次数和访问时间，追踪学习进度</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #10b981; box-shadow: 0 2px 4px rgba(16,185,129,0.08);">🔄 <strong>自动重置</strong> - 支持每次开启思源时自动重置已访问文档记录</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">🎯 <strong>拥抱文档优先级</strong> - 可自行维护所有文档的优先级，作为漫游文档的推荐依据，可基于轮盘赌算法（优先级越高，推荐概率越大）或绝对优先级顺序（优先级数值高的必先被推荐）进行漫游</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #14b8a6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        🧠 <strong>智能推荐</strong> — 多锚点 TF-IDF 流程与侧边栏内联展示
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <h4 style="margin: 0 0 0.4em; color: #0f172a;">智能推荐设置</h4>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li><strong>锚点</strong>：<code>recent_roam_N</code>、<code>top_roam_M</code></li>
+                            <li><strong>结果</strong>：<code>topK</code> 推荐条数</li>
+                            <li><strong>候选上限</strong>：<code>maxCandidates</code>（控制计算规模）</li>
+                            <li><strong>采样段落上限</strong>：<code>maxParagraphs</code>（标题 + 头/中/尾）</li>
+                        </ul>
+                    </div>
+                    <div style="margin-top: 0.8em;">
+                        <h4 style="margin: 0 0 0.4em; color: #0f172a;">推荐算法流程</h4>
+                        <ol style="margin: 0; padding-left: 1.2em;">
+                            <li><strong>复用筛选</strong>：继承渐进阅读的笔记本/根/标签/SQL 过滤，保持范围一致。</li>
+                            <li><strong>锚点选取</strong>：按 <code>custom-roaming-last</code> 取最近 N 篇，按 <code>custom-roaming-count</code> 取漫游次数最多 M 篇，合并去重。</li>
+                            <li><strong>候选池</strong>：过滤后减掉锚点，按 <code>updated</code> 排序，数量不超过 <code>maxCandidates</code>。</li>
+                            <li><strong>文本采样</strong>：标题 + 头/中/尾片段，数量受 <code>maxParagraphs</code> 限制，移除 Markdown 噪声。</li>
+                            <li><strong>轻量分词</strong>：中文逐字、英文单词，停用词过滤。</li>
+                            <li><strong>TF-IDF 向量</strong>：TF 长度归一化后乘以 IDF，稀疏 Map 存储。</li>
+                            <li><strong>相似度</strong>：候选与各锚点做余弦，相似度取均值，降低单锚点噪声。</li>
+                            <li><strong>展示与闭环</strong>：侧边栏按得分排序展示；点击打开文档并刷新指标/优先级，更新漫游/访问属性。</li>
+                        </ol>
+                    </div>
+                </details>
+            </li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">⚖️ <strong>自定义指标权重</strong> - 用户可自定义文章难度、重要性、紧急程度等指标及权重</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #06b6d4; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📊 <strong>可视化优先级</strong> - 条带状点图清晰展示文档优先级，支持直接拖动调整</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #f59e0b; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📁 <strong>灵活筛选</strong> - 支持多选笔记本和根文档筛选，精准定位学习范围</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #ef4444; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📝 <strong>实时调整</strong> - 阅读过程中可实时调整文章指标，动态优化推荐算法</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📈 <strong>已漫游文档管理</strong> - 已漫游文档列表+热力图，支持批量调节优先级和拖动排序</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📋 <strong>漫游历史追踪</strong> - 记录阅读历史、漫游次数和访问时间，追踪学习进度</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #10b981; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">🔄 <strong>自动重置</strong> - 支持每次开启思源时自动重置已访问文档记录</li>
         </ul>
     </div>
     <!-- 使用指南 -->
@@ -154,7 +223,8 @@
                 2. 设置为1：绝对按照优先级顺序先后漫游文档<br>
                 3. 设置为0：完全按照优先级为权重概率的轮盘赌方式漫游<br>
                 4. 设置为小数：有概率按优先级绝对顺序漫游，否则轮盘赌<br>
-                5. 设置页面第三栏，您可以批量随机重置文档优先级，将指定优先级范围的文档重置为随机的新优先级值
+                5. 设置页面第三栏，您可以批量随机重置文档优先级，将指定优先级范围的文档重置为随机的新优先级值<br>
+                6. 打开“智能推荐”，让多锚点 TF-IDF 推荐与混合漫游并行，获取更多候选文档
                 </div>
                 </details>
             </li>
@@ -184,6 +254,21 @@
     <!-- 近期更新 -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 近期更新</h2>
+
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.0.0版本更新 (2025.11.21)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🆕 功能特性</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li><strong>🪝 多锚点内容推荐</strong>：最近漫游 N 篇 + 漫游次数最多 M 篇作为锚点；TF-IDF + 余弦，多锚点取均值。</li>
+<li><strong>🧾 长文智能采样</strong>：标题 + 头/中/尾分段并停用词过滤，避免长文稀释、内存暴涨。</li>
+<li><strong>⚙️ 独立的智能推荐设置</strong>：可调锚点数量、Top K、候选上限、采样段落上限。</li>
+<li><strong>🧊 侧边栏内联推荐</strong>：在“筛选与指标”底部直接展示，一键打开。</li>
+<li><strong>🧮 点击推荐即计漫游</strong>：从推荐打开会刷新指标/优先级，并更新 <code>custom-roaming-last</code> / <code>custom-roaming-count</code> / <code>custom-visit-count</code>。</li>
+<li><strong>🛡 SQL 安全</strong>：自动添加表别名，避免过滤条件引发列名歧义。</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
 
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v3.1.0版本更新 (2025.11.21)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">

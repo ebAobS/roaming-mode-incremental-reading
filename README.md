@@ -1,4 +1,47 @@
 <div class="sy__outline" style="max-width: 800px; margin: 0 auto;">
+    <style>
+        .sy__outline {
+            font-family: "Segoe UI", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #0f172a;
+            line-height: 1.65;
+        }
+        .sy__outline h1,
+        .sy__outline h2,
+        .sy__outline h3,
+        .sy__outline h4 {
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .sy__outline p,
+        .sy__outline li,
+        .sy__outline summary {
+            color: #0f172a;
+        }
+        .sy__outline code {
+            background: #eef2ff;
+            color: #312e81;
+            padding: 0.1em 0.4em;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .sy__outline details {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.9em 1em;
+            box-shadow: 0 6px 20px rgba(15,23,42,0.06);
+        }
+        .sy__outline details summary {
+            list-style: none;
+            font-weight: 600;
+        }
+        .sy__outline details summary::marker {
+            display: none;
+        }
+        .sy__outline details + details {
+            margin-top: 1em;
+        }
+    </style>
     <div style="text-align: center; padding: 2em; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px;">
         <h1 style="color: white; margin: 0; font-size: 2.2em;">📚 Roaming Mode Incremental Reading</h1>
         <div style="color: rgba(255,255,255,0.9); margin-top: 0.5em; font-size: 1.1em;">An incremental reading plugin powered by intelligent recommendation algorithms, delivering a stress-free "read later" learning experience</div>
@@ -15,9 +58,6 @@
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #fbbf24; border-radius: 8px; box-shadow: 0 4px 12px rgba(245,158,11,0.15);">
         <h2 style="color: #d97706; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🤝 Project Information</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
-                <strong>Based on</strong>: <a href="https://github.com/terwer/siyuan-plugin-random-doc.git" style="color: #d97706;">SiYuan Plugin: Document Roaming</a> (Author: <a href="https://github.com/terwer" style="color: #d97706;">terwer</a>)
-            </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
                 <strong>Repository</strong>: <a href="https://github.com/ebAobS/roaming-mode-incremental-reading" style="color: #d97706;">GitHub Repository</a>
             </li>
@@ -46,14 +86,43 @@
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1px solid #bae6fd; border-radius: 8px; box-shadow: 0 4px 12px rgba(14,165,233,0.15);">
         <h2 style="color: #0ea5e9; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Core Features</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #6366f1; box-shadow: 0 2px 4px rgba(99,102,241,0.08);">🎯 <strong>Intelligent Priority Recommendation</strong> - Hybrid mechanism combining roulette wheel algorithm and absolute priority order</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #8b5cf6; box-shadow: 0 2px 4px rgba(139,92,246,0.08);">⚖️ <strong>Customizable Metric Weights</strong> - Users can define metrics like difficulty, importance, urgency, and set their weights</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #06b6d4; box-shadow: 0 2px 4px rgba(6,182,212,0.08);">📊 <strong>Visualized Priorities</strong> - Strip dot chart clearly shows document priorities, supports direct drag adjustment</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">📁 <strong>Flexible Filtering</strong> - Multi-select notebooks and root documents for precise learning scope</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #ef4444; box-shadow: 0 2px 4px rgba(239,68,68,0.08);">📝 <strong>Real-time Adjustment</strong> - Adjust article metrics in real time during reading, dynamically optimize recommendations</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #8b5cf6; box-shadow: 0 2px 4px rgba(139,92,246,0.08);">📈 <strong>Roamed Document Management</strong> - Roamed document list + heatmap, batch adjust priorities, drag to sort</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #6366f1; box-shadow: 0 2px 4px rgba(99,102,241,0.08);">📋 <strong>Roaming History Tracking</strong> - Record reading history, roaming count, and access time to track progress</li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #10b981; box-shadow: 0 2px 4px rgba(16,185,129,0.08);">🔄 <strong>Auto Reset</strong> - Optionally auto-reset visited document records each time SiYuan starts</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">🎯 <strong>Embrace Document Priority</strong> - Maintain document priorities yourself and use them as the roaming recommendation source, based on roulette (higher priority → higher probability) or absolute ordering (always pick the highest priority first)</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #14b8a6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        🧠 <strong>Intelligent Recommendation</strong> — Multi-anchor TF-IDF pipeline with inline sidebar output
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <h4 style="margin: 0 0 0.4em; color: #0f172a;">Intelligent Recommendation Settings</h4>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li><strong>Anchors</strong>: <code>recent_roam_N</code>, <code>top_roam_M</code></li>
+                            <li><strong>Results</strong>: <code>topK</code> recommendations</li>
+                            <li><strong>Candidate Limit</strong>: <code>maxCandidates</code> to cap computation scale</li>
+                            <li><strong>Sampling Paragraph Cap</strong>: <code>maxParagraphs</code> (title + head/mid/tail)</li>
+                        </ul>
+                    </div>
+                    <div style="margin-top: 0.8em;">
+                        <h4 style="margin: 0 0 0.4em; color: #0f172a;">Recommendation Pipeline</h4>
+                        <ol style="margin: 0; padding-left: 1.2em;">
+                            <li><strong>Reuse filtering</strong>: inherit notebook/root/tag/SQL filters from incremental reading.</li>
+                            <li><strong>Anchor selection</strong>: pick recent N via <code>custom-roaming-last</code> and top M via <code>custom-roaming-count</code>, then dedupe.</li>
+                            <li><strong>Candidate pool</strong>: subtract anchors, sort by <code>updated</code>, keep within <code>maxCandidates</code>.</li>
+                            <li><strong>Text sampling</strong>: title + head/mid/tail snippets, limited by <code>maxParagraphs</code>, strip Markdown noise.</li>
+                            <li><strong>Lightweight tokenization</strong>: per-character Chinese, per-word English, remove stop words.</li>
+                            <li><strong>TF-IDF vectors</strong>: length-normalized TF times IDF, stored as sparse maps.</li>
+                            <li><strong>Similarity</strong>: compute cosine against every anchor, average scores to reduce single-anchor noise.</li>
+                            <li><strong>Display & feedback loop</strong>: sidebar ranks by score; opening a recommendation refreshes metrics/priority and updates roaming/access attributes.</li>
+                        </ol>
+                    </div>
+                </details>
+            </li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">⚖️ <strong>Customizable Metric Weights</strong> - Users can define metrics like difficulty, importance, urgency, and set their weights</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #06b6d4; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📊 <strong>Visualized Priorities</strong> - Strip dot chart clearly shows document priorities, supports direct drag adjustment</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #f59e0b; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📁 <strong>Flexible Filtering</strong> - Multi-select notebooks and root documents for precise learning scope</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #ef4444; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📝 <strong>Real-time Adjustment</strong> - Adjust article metrics in real time during reading, dynamically optimize recommendations</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📈 <strong>Roamed Document Management</strong> - Roamed document list + heatmap, batch adjust priorities, drag to sort</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📋 <strong>Roaming History Tracking</strong> - Record reading history, roaming count, and access time to track progress</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #10b981; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">🔄 <strong>Auto Reset</strong> - Optionally auto-reset visited document records each time SiYuan starts</li>
         </ul>
     </div>
     <!-- User Guide -->
@@ -154,7 +223,8 @@
                 2. Set to 1: strictly roam in priority order<br>
                 3. Set to 0: fully use roulette wheel by priority as weight<br>
                 4. Set to decimal: sometimes roam by order, otherwise roulette wheel<br>
-                5. In the settings panel, you can batch reset priorities randomly for documents within a specified range
+                5. In the settings panel, you can batch reset priorities randomly for documents within a specified range<br>
+                6. Enable intelligent recommendation to surface multi-anchor TF-IDF suggestions alongside hybrid roaming for richer choices
                 </div>
                 </details>
             </li>
@@ -184,6 +254,21 @@
     <!-- Recent Updates -->
 <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Recent Updates</h2>
+
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.0.0 Update (2025.11.21)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🆕 New Features</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li><strong>🪝 Multi-anchor recommendation</strong>: use the latest N roamed notes plus the top M most roamed notes as anchors; TF-IDF + cosine similarity, averaging scores across anchors.</li>
+<li><strong>🧾 Long-form smart sampling</strong>: title + head/mid/tail sampling with stop-word filtering to avoid diluted signals and memory spikes.</li>
+<li><strong>⚙️ Dedicated recommendation settings</strong>: adjustable anchor counts, Top K, candidate cap, and sampled paragraph limits.</li>
+<li><strong>🧊 Inline sidebar suggestions</strong>: surface recommendations right under “Filters & Metrics” with one-click open.</li>
+<li><strong>🧮 Click-to-roam updates</strong>: opening from recommendations refreshes metrics/priority and updates <code>custom-roaming-last</code> / <code>custom-roaming-count</code> / <code>custom-visit-count</code>.</li>
+<li><strong>🛡 SQL safety</strong>: auto-apply table aliases to prevent ambiguous column errors in filters.</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
 
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v3.1.0 Update (2025.11.21)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">
