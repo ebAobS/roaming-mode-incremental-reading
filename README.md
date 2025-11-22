@@ -255,6 +255,24 @@
 <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Recent Updates</h2>
 
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.1.0 Update (2025.11.23)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🌟 New Features</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li><strong>📱 Mobile one-tap roaming</strong>: Tap the purple floating button to jump directly to a random document without extra dialogs for smoother mobile flow.</li>
+<li><strong>⚡ Faster mobile jump</strong>: Reduced delay from 300ms to 100ms to improve responsiveness.</li>
+<li><strong>🧭 Side-by-side filters</strong>: Filter mode and filter content now share one row, saving vertical space.</li>
+<li><strong>🗂 Filter history</strong>: Keeps the latest 10 filter choices, supports pinning to avoid overwriting, and can be applied quickly from the filter header.</li>
+</ul>
+</li>
+<li style="margin: 0.3em 0;"><strong style="color: #ef4444;">🐛 Bug Fixes</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li>Fixed mobile floating button tap not responding, ensuring roaming triggers and navigation correctly.</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
+
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v4.0.1 Update (2025.11.22)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">
 <li style="margin: 0.3em 0;"><strong style="color: #10b981;">🆕 New Features</strong>

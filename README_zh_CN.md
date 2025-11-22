@@ -255,6 +255,24 @@
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 近期更新</h2>
 
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.1.0版本更新 (2025.11.23)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🌟 新功能</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li><strong>📱 移动端浮窗一键漫游</strong>：点击紫色浮窗直接跳转随机文档，无需弹窗操作，提升流畅度。</li>
+<li><strong>⚡ 跳转响应优化</strong>：移动端延迟从 300ms 优化到 100ms，操作更顺滑。</li>
+<li><strong>🧭 筛选左右并排</strong>：筛选方式与筛选内容放在同一行，减少面板竖向占用。</li>
+<li><strong>🗂 筛选历史</strong>：记录最近 10 次筛选（可钉住防覆盖），在筛选区域右上快速查看并一键应用。</li>
+</ul>
+</li>
+<li style="margin: 0.3em 0;"><strong style="color: #ef4444;">🐛 问题修复</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li>修复移动端浮窗点击无响应的问题，确保点击后可正确触发漫游并跳转。</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
+
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v4.0.1版本更新 (2025.11.22)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">
 <li style="margin: 0.3em 0;"><strong style="color: #10b981;">🆕 新增功能</strong>
