@@ -24,9 +24,11 @@
     { key: "chart", label: "点状图" },
     { key: "priority", label: "优先级排序表" },
     { key: "visited", label: "已漫游文档" },
+    { key: "roamingCount", label: "漫游次数排序表" },
   ]
 
   let activeTab = 0
+  $: currentTabKey = tabs[activeTab]?.key || ""
   let probabilityTip = "等待漫游，点击下方按钮开始"
   let isLoading = false
   let metricsLoading = false
@@ -72,6 +74,8 @@
 
   let priorityList: Array<{ id: string; title: string; priority: number; visited: boolean }> = []
   let visitedDocs: Array<{ id: string; content: string; lastTime?: string }> = []
+  let roamingCountList: Array<{ id: string; title: string; roamingCount: number }> = []
+  let roamingCountLoading = false
   const readNumberInput = (event: Event) => parseFloat((event.target as HTMLInputElement).value)
   let showSqlExamples = false
   let sqlExamples: Array<{ title: string; sql: string }> = []
@@ -133,12 +137,15 @@
 
   const switchTab = async (index: number) => {
     activeTab = index
-    if (index === 1) {
+    const key = tabs[index]?.key
+    if (key === "chart") {
       await refreshPriorityBarPoints()
-    } else if (index === 2) {
+    } else if (key === "priority") {
       await loadPriorityList()
-    } else if (index === 3) {
+    } else if (key === "visited") {
       await loadVisitedDocs()
+    } else if (key === "roamingCount") {
+      await loadRoamingCountList()
     }
   }
 
@@ -148,7 +155,8 @@
   }
 
   export function openVisitedTab() {
-    switchTab(3)
+    const visitedIndex = tabs.findIndex((tab) => tab.key === "visited")
+    switchTab(visitedIndex === -1 ? 0 : visitedIndex)
   }
 
   export async function resetVisitedFromOutside() {
@@ -881,9 +889,37 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     }
   }
 
+  const loadRoamingCountList = async () => {
+    roamingCountLoading = true
+    try {
+      const reviewer = await ensureReviewer()
+      const docs = await reviewer.getRoamingCountList(storeConfig)
+      roamingCountList = docs.sort((a, b) => b.roamingCount - a.roamingCount)
+    } catch (error) {
+      pluginInstance.logger.error("Failed to load roaming count list", error)
+      roamingCountList = []
+    } finally {
+      roamingCountLoading = false
+    }
+  }
+
+  const resetRoamingCountForDoc = async (docId: string) => {
+    try {
+      const reviewer = await ensureReviewer()
+      await reviewer.resetRoamingCount(docId)
+      roamingCountList = roamingCountList
+        .map((item) => (item.id === docId ? { ...item, roamingCount: 0 } : item))
+        .sort((a, b) => b.roamingCount - a.roamingCount)
+      showMessage("Roaming count reset to 0", 2000, "info")
+    } catch (error: any) {
+      pluginInstance.logger.error("Reset roaming count failed", error)
+      showMessage("Reset failed: " + (error?.message || error), 3000, "error")
+    }
+  }
+
   const resetVisitedAndRefresh = async () => {
     await resetAllVisitCounts()
-    if (activeTab === 3) {
+    if (currentTabKey === "visited") {
       await loadVisitedDocs()
     }
   }
@@ -903,11 +939,14 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       await refreshCurrentDocMetrics()
       await reviewer.recordVisitAndRoam(docId)
       await refreshPriorityBarPoints()
-      if (activeTab === 2) {
+      if (currentTabKey === "priority") {
         await loadPriorityList()
       }
-      if (activeTab === 3) {
+      if (currentTabKey === "visited") {
         await loadVisitedDocs()
+      }
+      if (currentTabKey === "roamingCount") {
+        await loadRoamingCountList()
       }
       await openTab({ app: pluginInstance.app, doc: { id: docId } })
     } catch (error: any) {
@@ -998,11 +1037,14 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       }
 
       await refreshPriorityBarPoints()
-      if (activeTab === 2) {
+      if (currentTabKey === "priority") {
         await loadPriorityList()
       }
-      if (activeTab === 3) {
+      if (currentTabKey === "visited") {
         await loadVisitedDocs()
+      }
+      if (currentTabKey === "roamingCount") {
+        await loadRoamingCountList()
       }
       await refreshRecommendations()
 
@@ -1088,14 +1130,14 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     </div>
   </div>
 
-  <div class="tab-bar">
+  <div class="tab-bar" style={`grid-template-columns: repeat(${tabs.length}, 1fr);`}>
     {#each tabs as tab, index}
       <button class:selected={activeTab === index} on:click={() => switchTab(index)}>{tab.label}</button>
     {/each}
   </div>
 
   <div class="tab-panels">
-    {#if activeTab === 0}
+    {#if currentTabKey === "filters"}
       <div class="tip-banner">
         <div class="tip-icon">✨</div>
       <div class="tip-text">{probabilityTip}</div>
@@ -1338,7 +1380,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
           </ul>
         {/if}
       </div>
-    {:else if activeTab === 1}
+    {:else if currentTabKey === "chart"}
       <div class="section">
         <div class="section-title">优先级点状图（竖向）</div>
         {#if priorityBarPoints.length === 0}
@@ -1360,7 +1402,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
           <button class="secondary-button" on:click={refreshPriorityBarPoints}>刷新点图</button>
         </div>
       </div>
-    {:else if activeTab === 2}
+    {:else if currentTabKey === "priority"}
       <div class="section">
         <div class="section-title">优先级排序表</div>
         <div class="toolbar-row">
@@ -1412,7 +1454,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
           </ul>
         {/if}
       </div>
-    {:else}
+    {:else if currentTabKey === "visited"}
       <div class="section">
         <div class="section-title">已漫游文档</div>
         <div class="toolbar-row">
@@ -1435,6 +1477,43 @@ const sortHistory = (items: FilterHistoryItem[]) =>
                   on:keydown={(e) => e.key === "Enter" && openDoc(doc.id)}
                 >{doc.content || "(无标题)"}</span>
                 <small>{formatRoamingTime(doc.lastTime)}</small>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </div>
+    {:else if currentTabKey === "roamingCount"}
+      <div class="section">
+        <div class="section-title">漫游次数排序表</div>
+        <div class="toolbar-row">
+          <button class="secondary-button" on:click={loadRoamingCountList} disabled={roamingCountLoading}>
+            {roamingCountLoading ? "加载中..." : "刷新列表"}
+          </button>
+        </div>
+        {#if roamingCountLoading}
+          <div class="placeholder">正在加载漫游次数...</div>
+        {:else if roamingCountList.length === 0}
+          <div class="placeholder">暂无漫游次数数据</div>
+        {:else}
+          <ul class="roaming-count-list">
+            {#each roamingCountList as doc}
+              <li>
+                <div class="roaming-row">
+                  <div class="roaming-main">
+                    <span
+                      class="roaming-title"
+                      role="button"
+                      tabindex="0"
+                      on:click={() => openDoc(doc.id)}
+                      on:keydown={(e) => e.key === "Enter" && openDoc(doc.id)}
+                    >{doc.title}</span>
+                    <span class="roaming-id">{doc.id.slice(0, 6)}...</span>
+                  </div>
+                  <div class="roaming-actions">
+                    <span class="roaming-count">漫游 {doc.roamingCount} 次</span>
+                    <button class="secondary-button danger" on:click={() => resetRoamingCountForDoc(doc.id)}>清0</button>
+                  </div>
+                </div>
               </li>
             {/each}
           </ul>
@@ -1591,7 +1670,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
 
   .tab-bar {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     border-bottom: 1px solid var(--b3-theme-border);
     flex-shrink: 0;
   }
@@ -2101,7 +2180,8 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   }
 
   .priority-list,
-  .visited-list {
+  .visited-list,
+  .roaming-count-list {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -2115,7 +2195,8 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   }
 
   .priority-list li,
-  .visited-list li {
+  .visited-list li,
+  .roaming-count-list li {
     border: none;
     border-bottom: 1px solid var(--b3-theme-border);
     padding: 10px 12px;
@@ -2123,7 +2204,8 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   }
 
   .priority-list li:last-child,
-  .visited-list li:last-child {
+  .visited-list li:last-child,
+  .roaming-count-list li:last-child {
     border-bottom: none;
   }
 
@@ -2177,6 +2259,41 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   .visited-list small {
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
+  }
+
+  .roaming-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .roaming-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .roaming-title {
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+  }
+
+  .roaming-id {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+    font-size: 12px;
+  }
+
+  .roaming-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .roaming-count {
+    font-weight: 600;
   }
 
   .overlay {

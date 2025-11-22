@@ -1485,11 +1485,62 @@ class IncrementalReviewer {
     }
   }
 
+  /** 6.9.2 Get roaming count list for filtered documents (desc by count). */
+  public async getRoamingCountList(
+    config?: RandomDocConfig
+  ): Promise<Array<{ id: string; title: string; roamingCount: number }>> {
+    try {
+      const filterCondition = await this.buildFilterCondition(config)
+      const aliasedCondition = this.applyAlias(filterCondition, "b")
+      const sql = `
+        SELECT 
+          b.id, 
+          b.content, 
+          COALESCE(NULLIF(attr.value, ''), '0') AS roamingCount
+        FROM blocks b
+        LEFT JOIN attributes attr 
+          ON attr.block_id = b.id 
+          AND attr.name = 'custom-roaming-count'
+        WHERE b.type = 'd'
+        ${aliasedCondition}
+        ORDER BY CAST(COALESCE(NULLIF(attr.value, ''), '0') AS INTEGER) DESC, b.updated DESC
+      `
+
+      const result = await this.pluginInstance.kernelApi.sql(sql)
+      if (result.code !== 0) {
+        this.pluginInstance.logger.error("Failed to load roaming count list", { sql, msg: result.msg })
+        return []
+      }
+
+      const rows = (result.data as any[]) || []
+      return rows.map((row) => ({
+        id: row.id,
+        title: (row.content || "").trim() || "Untitled document",
+        roamingCount: parseInt(row.roamingCount || "0", 10) || 0
+      }))
+    } catch (error) {
+      this.pluginInstance.logger.error("Failed to calculate roaming count list", error)
+      return []
+    }
+  }
+
+  public async resetRoamingCount(docId: string): Promise<void> {
+    try {
+      await this.pluginInstance.kernelApi.setBlockAttrs(docId, {
+        "custom-roaming-count": "0"
+      })
+    } catch (error) {
+      this.pluginInstance.logger.error(`Reset roaming count failed for ${docId}`, error)
+      throw error
+    }
+  }
+
   /**
    * 6.9.1 公开方法：同时记录漫游与访问（推荐入口复用）
    * - roaming-count 自增，roaming-last 更新
    * - visit-count 自增（首次即置为1）
    */
+
   public async recordVisitAndRoam(docId: string): Promise<void> {
     await this.updateVisitCount(docId)
     await this.incrementRoamingCount(docId)
@@ -1808,6 +1859,15 @@ class IncrementalReviewer {
       showMessage(`清空数据失败: ${error.message}`, 5000, "error")
       throw error
     }
+  }
+
+  private applyAlias(condition: string, alias: string): string {
+    if (!condition || !alias) return condition
+    return condition.replace(/\b(box|id|path)\b/g, (match, _p1, offset, full) => {
+      const before = full[offset - 1]
+      if (before === ".") return match
+      return `${alias}.${match}`
+    })
   }
 
   /**
