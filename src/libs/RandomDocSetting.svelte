@@ -16,6 +16,7 @@
   let reviewMode: any = "incremental"
   let excludeVisited = true
   let autoResetOnStartup = false
+  let autoReloadWhenEmpty = false
   let absolutePriorityProb = 0;
   let enableDebugLog = false;
   
@@ -61,6 +62,7 @@
       storeConfig.reviewMode = reviewMode
       storeConfig.excludeVisited = excludeVisited
       storeConfig.autoResetOnStartup = autoResetOnStartup
+      storeConfig.autoReloadWhenEmpty = autoReloadWhenEmpty
       storeConfig.absolutePriorityProb = Math.max(0, Math.min(1, Number(absolutePriorityProb)))
       storeConfig.enableDebugLog = enableDebugLog
       storeConfig.recentAnchorCount = Number(recommendRecentCount) || 1
@@ -400,6 +402,7 @@
     reviewMode = storeConfig?.reviewMode ?? "incremental"
     excludeVisited = storeConfig?.excludeVisited !== false
     autoResetOnStartup = storeConfig?.autoResetOnStartup ?? false
+    autoReloadWhenEmpty = storeConfig?.autoReloadWhenEmpty ?? false
     absolutePriorityProb = typeof storeConfig?.absolutePriorityProb === 'number' ? storeConfig.absolutePriorityProb : 0;
     enableDebugLog = storeConfig?.enableDebugLog ?? false;
     recommendRecentCount = storeConfig?.recentAnchorCount ?? 3
@@ -468,6 +471,20 @@
                 />
                 开启后，每次启动自动清空已访问文档记录
               </label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <h4 class="setting-title">自动重载漫游</h4>
+              <label>
+                <input
+                  type="checkbox"
+                  bind:checked={autoReloadWhenEmpty}
+                  disabled={$isLocked}
+                />
+                开启后，当没有可用文档时自动清除访问记录并重新开始
+              </label>
+              <p class="help-text">仅在开启"排除已访问文档"时生效</p>
             </div>
           </div>
           <div class="form-row">

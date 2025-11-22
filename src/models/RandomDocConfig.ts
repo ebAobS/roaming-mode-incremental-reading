@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2025, ebAobS . All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -147,6 +147,13 @@ class RandomDocConfig {
   public enableDebugLog = false
 
   /**
+   * 2.14 自动重载功能开关
+   * 当没有可漫游的文档时，自动清除访问记录并重新开始
+   * 默认关闭
+   */
+  public autoReloadWhenEmpty = false
+
+  /**
    * 2.13 构造函数
    * 初始化配置对象，设置默认值
    */
@@ -157,6 +164,7 @@ class RandomDocConfig {
     this.autoResetOnStartup = this.autoResetOnStartup ?? false
     this.absolutePriorityProb = this.absolutePriorityProb ?? 0
     this.enableDebugLog = this.enableDebugLog ?? false
+    this.autoReloadWhenEmpty = this.autoReloadWhenEmpty ?? false
     this.recentAnchorCount = this.recentAnchorCount ?? 3
     this.topAnchorCount = this.topAnchorCount ?? 2
     this.recommendTopK = this.recommendTopK ?? 8
