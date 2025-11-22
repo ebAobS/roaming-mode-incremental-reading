@@ -362,6 +362,11 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     await persistFilterHistory(updated)
   }
 
+  const deleteHistoryEntry = async (id: string) => {
+    const updated = filterHistory.filter((item) => item.id !== id)
+    await persistFilterHistory(updated)
+  }
+
   const applyFilterHistoryItem = async (item: FilterHistoryItem) => {
     if (!item) return
     filterMode = item.mode
@@ -1109,18 +1114,29 @@ const sortHistory = (items: FilterHistoryItem[]) =>
               {:else}
                 {#each filterHistory as item (item.id)}
                   <div class="history-item">
-                    <button class="history-apply" on:click={() => applyFilterHistoryItem(item)}>
-                      <span class="history-mode">{getFilterModeLabel(item.mode)}</span>
-                      <span class="history-label">{item.label}</span>
-                    </button>
-                    <button
-                      class="history-pin"
-                      class:active-pin={item.pinned}
-                      title={item.pinned ? "取消钉住" : "钉住记录"}
-                      on:click={() => togglePinHistory(item.id)}
-                    >
-                      {item.pinned ? "📌" : "📍"}
-                    </button>
+                    <div class="history-main">
+                      <button class="history-apply" on:click={() => applyFilterHistoryItem(item)}>
+                        <span class="history-mode">{getFilterModeLabel(item.mode)}</span>
+                        <span class="history-label">{item.label}</span>
+                      </button>
+                      <div class="history-actions">
+                        <button
+                          class="history-pin"
+                          class:active-pin={item.pinned}
+                          title={item.pinned ? "取消钉住" : "钉住记录"}
+                          on:click={() => togglePinHistory(item.id)}
+                        >
+                          {item.pinned ? "📌" : "📍"}
+                        </button>
+                        <button
+                          class="history-delete"
+                          title="删除记录"
+                          on:click={() => deleteHistoryEntry(item.id)}
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 {/each}
               {/if}
@@ -1770,12 +1786,20 @@ const sortHistory = (items: FilterHistoryItem[]) =>
 
   .history-item {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
     padding: 8px;
     border: 1px solid var(--b3-theme-border);
     border-radius: 8px;
     background: var(--b3-theme-surface);
+  }
+
+  .history-main {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
   }
 
   .history-apply {
@@ -1789,6 +1813,13 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     cursor: pointer;
     color: var(--b3-theme-on-surface);
     text-align: left;
+  }
+
+  .history-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    white-space: nowrap;
   }
 
   .history-mode {
@@ -1812,6 +1843,16 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     border: 1px solid var(--b3-theme-border);
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-surface);
+    border-radius: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    min-width: 40px;
+  }
+
+  .history-delete {
+    border: 1px solid var(--b3-theme-border);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-error);
     border-radius: 8px;
     padding: 6px 8px;
     cursor: pointer;
