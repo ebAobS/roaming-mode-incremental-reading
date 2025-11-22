@@ -255,6 +255,23 @@
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 近期更新</h2>
 
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.0.1版本更新 (2025.11.22)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🆕 新增功能</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li><strong>📱 移动端浮窗一键漫游</strong>：点击紫色浮窗直接跳转到随机文档，无需弹窗操作，提供更流畅的移动端体验</li>
+<li><strong>⚡ 响应速度优化</strong>：将移动端跳转延迟从300ms优化到100ms，提升操作流畅度</li>
+</ul>
+</li>
+<li style="margin: 0.3em 0;"><strong style="color: #ef4444;">🐛 缺陷修复</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li><strong>🔧 移动端API修复</strong>：修复使用通用 <code>openTab</code> API 导致无法自动切换到新文档的问题，改用移动端专用 <code>openMobileFileById</code> API</li>
+<li><strong>📱 浮窗响应修复</strong>：修复移动端浮窗点击无响应的问题，确保点击后能正确触发漫游并跳转</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
+
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v4.0.0版本更新 (2025.11.21)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">
 <li style="margin: 0.3em 0;"><strong style="color: #10b981;">🆕 功能特性</strong>
