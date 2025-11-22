@@ -1688,7 +1688,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     padding: 10px 12px;
     background: var(--b3-theme-surface);
     display: grid;
-    grid-template-columns: minmax(140px, 220px) 1fr;
+    grid-template-columns: auto 1fr;
     gap: 12px;
     align-items: flex-start;
     margin-bottom: 0;
@@ -1711,6 +1711,11 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     flex-direction: row;
     align-items: center;
     gap: 8px;
+  }
+
+  .filter-content-block {
+    min-width: 0;
+    width: 100%;
   }
 
   .filter-content-block {
