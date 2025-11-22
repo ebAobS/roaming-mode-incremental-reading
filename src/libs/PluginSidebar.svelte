@@ -93,6 +93,27 @@
   let recommendMaxCandidates = 120
   let recommendMaxParagraphs = 8
 
+  type FilterHistoryState = {
+    notebookIds?: string[]
+    rootId?: string
+    rootDocTitle?: string
+    tags?: string[]
+    sqlQuery?: string
+  }
+
+  type FilterHistoryItem = {
+    id: string
+    mode: FilterMode
+    label: string
+    state: FilterHistoryState
+    pinned?: boolean
+    timestamp: number
+  }
+
+  const MAX_FILTER_HISTORY = 10
+  let filterHistory: FilterHistoryItem[] = []
+  let showFilterHistory = false
+
   $: currentDocTitle = (() => {
     if (!rootId) {
       return "请选择文档"
@@ -210,14 +231,146 @@
     }
   }
 
-  const onFilterModeChange = async () => {
-    storeConfig.filterMode = filterMode
+  const generateHistoryId = () =>
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `fh-${Date.now()}-${Math.random().toString(16).slice(2)}`
+
+  const normalizeHistoryState = (state: FilterHistoryState) => ({
+    notebookIds: state.notebookIds ? [...state.notebookIds].sort() : undefined,
+    rootId: state.rootId || "",
+    rootDocTitle: state.rootDocTitle || "",
+    tags: state.tags ? [...state.tags].sort() : undefined,
+    sqlQuery: state.sqlQuery?.trim() || "",
+  })
+
+  const isSameHistoryEntry = (a: FilterHistoryItem, b: FilterHistoryItem) => {
+    if (a.mode !== b.mode) return false
+    const normalizedA = normalizeHistoryState(a.state || {})
+    const normalizedB = normalizeHistoryState(b.state || {})
+    return JSON.stringify(normalizedA) === JSON.stringify(normalizedB)
+  }
+
+  const getFilterModeLabel = (mode: FilterMode) => {
+    switch (mode) {
+      case FilterMode.Notebook:
+        return "笔记本"
+      case FilterMode.Root:
+        return "根文档"
+      case FilterMode.Tag:
+        return "标签"
+      case FilterMode.SQL:
+        return "SQL 查询"
+      default:
+        return "筛选方式"
+    }
+  }
+
+  const buildHistoryLabel = (mode: FilterMode, state: FilterHistoryState) => {
+    switch (mode) {
+      case FilterMode.Notebook: {
+        if (!state.notebookIds || state.notebookIds.length === 0) {
+          return "全部笔记本"
+        }
+        const names = state.notebookIds.map((id) => getNotebookName(id))
+        return `笔记本：${names.join(" / ")}`
+      }
+      case FilterMode.Root:
+        return `根文档：${state.rootDocTitle || state.rootId || "未选择"}`
+      case FilterMode.Tag:
+        return state.tags && state.tags.length > 0 ? `标签：${state.tags.join(", ")}` : "标签：未选择"
+      case FilterMode.SQL: {
+        const preview = (state.sqlQuery || "").trim()
+        const shortPreview = preview.length > 40 ? `${preview.slice(0, 40)}...` : preview
+        return preview ? `SQL：${shortPreview}` : "SQL：未填写"
+      }
+      default:
+        return "筛选方式"
+    }
+  }
+
+  const sortHistory = (items: FilterHistoryItem[]) =>
+    [...items].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1
+      if (b.pinned && !a.pinned) return 1
+      return b.timestamp - a.timestamp
+    })
+
+  const buildHistoryState = (mode: FilterMode): FilterHistoryState => {
+    switch (mode) {
+      case FilterMode.Notebook:
+        return { notebookIds: [...selectedNotebooks] }
+      case FilterMode.Root:
+        return { rootId, rootDocTitle: selectedDocTitle || currentDocTitle }
+      case FilterMode.Tag:
+        return { tags: [...selectedTags] }
+      case FilterMode.SQL:
+        return { sqlQuery: sqlQuery.trim() }
+      default:
+        return {}
+    }
+  }
+
+  const recordFilterHistory = async (mode: FilterMode) => {
+    if (!storeConfig) return
+    const state = buildHistoryState(mode)
+    const label = buildHistoryLabel(mode, state)
+    const newEntry: FilterHistoryItem = {
+      id: generateHistoryId(),
+      mode,
+      label,
+      state,
+      pinned: false,
+      timestamp: Date.now(),
+    }
+    const existingMatch = filterHistory.find((item) => isSameHistoryEntry(item, newEntry))
+    const preservedPinned = existingMatch?.pinned ?? false
+    const withoutMatch = filterHistory.filter((item) => !isSameHistoryEntry(item, newEntry))
+    const updated = [{ ...newEntry, pinned: preservedPinned }, ...withoutMatch]
+    const pinnedItems = updated.filter((item) => item.pinned)
+    const unpinnedItems = updated.filter((item) => !item.pinned).slice(0, MAX_FILTER_HISTORY)
+    filterHistory = sortHistory([...pinnedItems, ...unpinnedItems])
+    storeConfig.filterHistory = filterHistory
     await pluginInstance.saveData(storeName, storeConfig)
+  }
+
+  const togglePinHistory = async (id: string) => {
+    if (!storeConfig) return
+    filterHistory = sortHistory(filterHistory.map((item) => (item.id === id ? { ...item, pinned: !item.pinned } : item)))
+    storeConfig.filterHistory = filterHistory
+    await pluginInstance.saveData(storeName, storeConfig)
+  }
+
+  const applyFilterHistoryItem = async (item: FilterHistoryItem) => {
+    if (!item) return
+    filterMode = item.mode
+    await onFilterModeChange(true)
+    const state = item.state || {}
+    if (item.mode === FilterMode.Notebook) {
+      selectedNotebooks = [...(state.notebookIds ?? [])]
+      await onNotebookChange()
+    } else if (item.mode === FilterMode.Root && state.rootId) {
+      await selectDocument(state.rootId, state.rootDocTitle || state.rootId)
+    } else if (item.mode === FilterMode.Tag) {
+      selectedTags = [...(state.tags ?? [])]
+      await confirmTagSelection()
+    } else if (item.mode === FilterMode.SQL) {
+      sqlQuery = state.sqlQuery ?? ""
+      await applySqlQuery()
+    }
+    showFilterHistory = false
+  }
+
+  const onFilterModeChange = async (skipHistory = false) => {
+    storeConfig.filterMode = filterMode
     if (filterMode === FilterMode.Tag) {
       await loadAvailableTags()
     }
     if (filterMode === FilterMode.SQL) {
       sqlQuery = storeConfig.sqlQuery || ""
+    }
+    if (!skipHistory) {
+      await recordFilterHistory(filterMode)
     }
   }
 
@@ -239,6 +392,7 @@
     await pluginInstance.saveData(storeName, storeConfig)
     pr = null
     await ensureReviewer()
+    await recordFilterHistory(FilterMode.Notebook)
   }
 
   const loadAvailableTags = async () => {
@@ -261,26 +415,26 @@
 
   const confirmTagSelection = async () => {
     storeConfig.tags = selectedTags
-    await pluginInstance.saveData(storeName, storeConfig)
     showTagDropdown = false
     pr = null
     await ensureReviewer()
+    await recordFilterHistory(FilterMode.Tag)
   }
 
   const clearAllTags = async () => {
     selectedTags = []
     storeConfig.tags = []
-    await pluginInstance.saveData(storeName, storeConfig)
     showTagDropdown = false
     pr = null
     await ensureReviewer()
+    await recordFilterHistory(FilterMode.Tag)
   }
 
   const applySqlQuery = async () => {
     storeConfig.sqlQuery = sqlQuery || ""
-    await pluginInstance.saveData(storeName, storeConfig)
     pr = null
     await ensureReviewer()
+    await recordFilterHistory(FilterMode.SQL)
     showMessage("已应用 SQL 筛选条件", 2000, "info")
   }
 
@@ -424,9 +578,9 @@
     showDocSelector = false
     storeConfig.rootId = rootId
     storeConfig.rootDocTitle = docTitle
-    await pluginInstance.saveData(storeName, storeConfig)
     pr = null
     await ensureReviewer()
+    await recordFilterHistory(FilterMode.Root)
   }
 
   const switchToManualInput = () => {
@@ -842,6 +996,9 @@
     }
     syncRecommendationConfig()
 
+    filterHistory = sortHistory((storeConfig as any).filterHistory ?? [])
+    storeConfig.filterHistory = filterHistory
+
     const res = await pluginInstance.kernelApi.lsNotebooks()
     notebooks = (res?.data as any)?.notebooks ?? []
     notebooks = notebooks.filter((notebook) => !notebook.closed)
@@ -910,68 +1067,94 @@
     {#if activeTab === 0}
       <div class="tip-banner">
         <div class="tip-icon">✨</div>
-        <div class="tip-text">{probabilityTip}</div>
-      </div>
+      <div class="tip-text">{probabilityTip}</div>
+    </div>
 
-      <div class="section filter-section">
-        <div class="section-title">筛选文档</div>
-        <div class="filter-row">
-          <span class="filter-label">筛选</span>
-          <select bind:value={filterMode} class="filter-select" on:change={onFilterModeChange}>
-            <option value={FilterMode.Notebook}>笔记本</option>
-            <option value={FilterMode.Root}>根文档</option>
-            <option value={FilterMode.Tag}>标签</option>
-            <option value={FilterMode.SQL}>SQL 查询</option>
-          </select>
+    <div class="section filter-section">
+      <div class="section-header">
+        <div class="section-title filter-section-title">筛选文档</div>
+        <div class="section-actions">
+          <button class="history-button" on:click={() => (showFilterHistory = !showFilterHistory)}>筛选历史</button>
         </div>
-
-        {#if filterMode === FilterMode.Notebook}
-          <div class="filter-row">
-            <div class="selector-wrapper">
-              <button class="filter-button" on:click={() => (showNotebookSelector = !showNotebookSelector)}>
-                {#if selectedNotebooks.length === 0}
-                  笔记本：请选择
-                {:else if selectedNotebooks.length === 1}
-                  {getNotebookName(selectedNotebooks[0])}
-                {:else}
-                  已选{selectedNotebooks.length}个笔记本
-                {/if}
-              </button>
-              {#if showNotebookSelector}
-                <div class="dropdown-list">
-                  {#each notebooks as notebook (notebook.id)}
-                    <label class="dropdown-item">
-                      <input type="checkbox" checked={selectedNotebooks.includes(notebook.id)} on:change={() => toggleNotebook(notebook.id)} />
-                      {notebook.name}
-                    </label>
-                  {/each}
-                  <div class="confirm-buttons">
-                    <button class="confirm-btn" on:click={() => { showNotebookSelector = false; onNotebookChange(); }}>确定</button>
+        {#if showFilterHistory}
+          <div class="filter-history-panel">
+              {#if filterHistory.length === 0}
+                <div class="empty-message">暂无筛选历史</div>
+              {:else}
+                {#each filterHistory as item (item.id)}
+                  <div class="history-item">
+                    <button class="history-apply" on:click={() => applyFilterHistoryItem(item)}>
+                      <span class="history-mode">{getFilterModeLabel(item.mode)}</span>
+                      <span class="history-label">{item.label}</span>
+                    </button>
+                    <button
+                      class="history-pin"
+                      class:active-pin={item.pinned}
+                      title={item.pinned ? "取消钉住" : "钉住记录"}
+                      on:click={() => togglePinHistory(item.id)}
+                    >
+                      {item.pinned ? "📌" : "📍"}
+                    </button>
                   </div>
-                </div>
+                {/each}
               {/if}
             </div>
+          {/if}
+        </div>
+
+        <div class="filter-row filter-main-row">
+          <div class="filter-mode-block">
+            <select bind:value={filterMode} class="filter-select" on:change={onFilterModeChange}>
+              <option value={FilterMode.Notebook}>笔记本</option>
+              <option value={FilterMode.Root}>根文档</option>
+              <option value={FilterMode.Tag}>标签</option>
+              <option value={FilterMode.SQL}>SQL 查询</option>
+            </select>
           </div>
-        {:else if filterMode === FilterMode.Root}
-          <div class="filter-row">
-            <button class="filter-button" on:click={startDocumentSelection}>{currentDocTitle}</button>
-          </div>
-        {:else if filterMode === FilterMode.Tag}
-          <div class="filter-row">
-            <div class="selector-wrapper">
-              <button class="filter-button" on:click={() => { showTagDropdown = !showTagDropdown; loadAvailableTags(); }}>
-                {#if selectedTags.length === 0}
-                  请选择标签
-                {:else if selectedTags.length === 1}
-                  {selectedTags[0]}
-                {:else}
-                  已选{selectedTags.length}个标签
+
+          <div class="filter-content-block">
+            {#if filterMode === FilterMode.Notebook}
+              <div class="selector-wrapper">
+                <button class="filter-button" on:click={() => (showNotebookSelector = !showNotebookSelector)}>
+                  {#if selectedNotebooks.length === 0}
+                    笔记本：请选择
+                  {:else if selectedNotebooks.length === 1}
+                    {getNotebookName(selectedNotebooks[0])}
+                  {:else}
+                    已选{selectedNotebooks.length}个笔记本
+                  {/if}
+                </button>
+                {#if showNotebookSelector}
+                  <div class="dropdown-list">
+                    {#each notebooks as notebook (notebook.id)}
+                      <label class="dropdown-item">
+                        <input type="checkbox" checked={selectedNotebooks.includes(notebook.id)} on:change={() => toggleNotebook(notebook.id)} />
+                        {notebook.name}
+                      </label>
+                    {/each}
+                    <div class="confirm-buttons">
+                      <button class="confirm-btn" on:click={() => { showNotebookSelector = false; onNotebookChange(); }}>确定</button>
+                    </div>
+                  </div>
                 {/if}
-              </button>
-              {#if showTagDropdown && !isTagsLoading}
-                <div class="dropdown-list">
-                  {#if availableTags.length === 0}
-                    <div class="empty-message">没有找到标签</div>
+              </div>
+            {:else if filterMode === FilterMode.Root}
+              <button class="filter-button" on:click={startDocumentSelection}>{currentDocTitle}</button>
+            {:else if filterMode === FilterMode.Tag}
+              <div class="selector-wrapper">
+                <button class="filter-button" on:click={() => { showTagDropdown = !showTagDropdown; loadAvailableTags(); }}>
+                  {#if selectedTags.length === 0}
+                    请选择标签
+                  {:else if selectedTags.length === 1}
+                    {selectedTags[0]}
+                  {:else}
+                    已选{selectedTags.length}个标签
+                  {/if}
+                </button>
+                {#if showTagDropdown && !isTagsLoading}
+                  <div class="dropdown-list">
+                    {#if availableTags.length === 0}
+                      <div class="empty-message">没有找到标签</div>
                   {:else}
                     {#each availableTags as tag}
                       <label class="dropdown-item">
@@ -990,63 +1173,64 @@
                 <div class="loading-message">加载标签...</div>
               {/if}
             </div>
-          </div>
-        {:else if filterMode === FilterMode.SQL}
-          <div class="filter-row">
-            <label class="filter-label" for="sql-input">SQL 查询</label>
-            <textarea
-              id="sql-input"
-              class="filter-sql"
-              bind:value={sqlQuery}
-              rows="4"
-              placeholder="例如：SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL AND content != ''"
-            ></textarea>
-            <div class="toolbar-row">
-              <button class="secondary-button" on:click={applySqlQuery}>应用筛选</button>
-              <button class="secondary-button" on:click={() => (showSqlExamples = !showSqlExamples)}>
-                {showSqlExamples ? "收起语句库" : "查看语句库"}
-              </button>
-            </div>
-            {#if showSqlExamples}
-              <div class="sql-examples-block">
-                <div class="sql-example-tip">
-                  <strong>💡 使用提示：</strong>
-                  <ul>
-                    <li>确保SQL返回的字段名是 <code>id</code>（文档ID）</li>
-                    <li>可以组合多个条件创建复杂的筛选逻辑</li>
-                    <li>点击 📋 按钮可快速复制SQL语句到剪贴板</li>
-                  </ul>
+            {:else if filterMode === FilterMode.SQL}
+              <div class="sql-filter-wrapper">
+                <label class="filter-label" for="sql-input">SQL 查询</label>
+                <textarea
+                  id="sql-input"
+                  class="filter-sql"
+                  bind:value={sqlQuery}
+                  rows="4"
+                  placeholder="例如：SELECT id FROM blocks WHERE type = 'd' AND content IS NOT NULL AND content != ''"
+                ></textarea>
+                <div class="toolbar-row">
+                  <button class="secondary-button" on:click={applySqlQuery}>应用筛选</button>
+                  <button class="secondary-button" on:click={() => (showSqlExamples = !showSqlExamples)}>
+                    {showSqlExamples ? "收起语句库" : "查看语句库"}
+                  </button>
                 </div>
-                {#each sqlExamples as example, idx}
-                  <div class="sql-example-item">
-                    <div class="sql-example-header">
-                      <strong>{example.title}</strong>
-                      <div class="sql-example-actions">
-                        <button class="copy-btn" title="复制" on:click={() => copySqlExample(example.sql)}>📋</button>
-                        <button class="copy-btn danger" title="删除" on:click={() => removeSqlExample(idx)}>🗑</button>
-                      </div>
+                {#if showSqlExamples}
+                  <div class="sql-examples-block">
+                    <div class="sql-example-tip">
+                      <strong>💡 使用提示：</strong>
+                      <ul>
+                        <li>确保SQL返回的字段名是 <code>id</code>（文档ID）</li>
+                        <li>可以组合多个条件创建复杂的筛选逻辑</li>
+                        <li>点击 📋 按钮可快速复制SQL语句到剪贴板</li>
+                      </ul>
                     </div>
-                    <code>{example.sql}</code>
+                    {#each sqlExamples as example, idx}
+                      <div class="sql-example-item">
+                        <div class="sql-example-header">
+                          <strong>{example.title}</strong>
+                          <div class="sql-example-actions">
+                            <button class="copy-btn" title="??" on:click={() => copySqlExample(example.sql)}>??</button>
+                            <button class="copy-btn danger" title="??" on:click={() => removeSqlExample(idx)}>??</button>
+                          </div>
+                        </div>
+                        <code>{example.sql}</code>
+                      </div>
+                    {/each}
+                    <div class="sql-example-add">
+                      <input
+                        class="b3-text-field"
+                        placeholder="?SQL??"
+                        bind:value={newSqlTitle}
+                      />
+                      <textarea
+                        class="filter-sql"
+                        placeholder="?SQL??"
+                        rows="2"
+                        bind:value={newSqlBody}
+                      ></textarea>
+                      <button class="secondary-button" on:click={addSqlExample}>??????</button>
+                    </div>
                   </div>
-                {/each}
-                <div class="sql-example-add">
-                  <input
-                    class="b3-text-field"
-                    placeholder="新SQL标题"
-                    bind:value={newSqlTitle}
-                  />
-                  <textarea
-                    class="filter-sql"
-                    placeholder="新SQL语句"
-                    rows="2"
-                    bind:value={newSqlBody}
-                  ></textarea>
-                  <button class="secondary-button" on:click={addSqlExample}>添加到语句库</button>
-                </div>
+                {/if}
               </div>
             {/if}
           </div>
-        {/if}
+        </div>
       </div>
 
       <div class="section">
@@ -1424,6 +1608,11 @@
     border: 1px solid var(--b3-theme-primary-lightest, var(--b3-theme-border));
     background: linear-gradient(180deg, var(--b3-theme-background) 0%, var(--b3-theme-surface) 100%);
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: visible;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .section-title {
@@ -1432,17 +1621,47 @@
     font-size: 14px;
   }
 
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .section-header .section-title {
+    margin: 0;
+  }
+
+  .section-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .filter-row {
-    margin-bottom: 8px;
     position: relative;
     border: 1px solid var(--b3-theme-border);
     border-radius: 8px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     background: var(--b3-theme-surface);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .filter-row + .filter-row {
-    margin-top: 10px;
+  .filter-main-row {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 900px) {
+    .filter-row {
+      grid-template-columns: 1fr;
+    }
   }
 
   .filter-label {
@@ -1451,14 +1670,138 @@
     color: var(--b3-theme-on-surface);
   }
 
+  .filter-mode-block {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .filter-content-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+
   .filter-select {
-    width: 100%;
+    width: auto;
+    min-width: 108px;
+    max-width: 132px;
     padding: 6px 8px;
     font-size: 13px;
     border: 1px solid var(--b3-theme-primary-lightest, var(--b3-theme-border));
     border-radius: 6px;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-surface);
+  }
+  @media (max-width: 900px) {
+    .filter-select {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+
+  .filter-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .history-button {
+    border: 1px solid var(--b3-theme-border);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-surface);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .history-button:hover {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  .filter-history-panel {
+    position: absolute;
+    top: 46px;
+    right: 10px;
+    width: min(420px, 100%);
+    max-height: 320px;
+    overflow-y: auto;
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 15;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 8px;
+    background: var(--b3-theme-surface);
+  }
+
+  .history-apply {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--b3-theme-on-surface);
+    text-align: left;
+  }
+
+  .history-mode {
+    font-size: 12px;
+    padding: 2px 8px;
+    background: var(--b3-theme-primary-lightest, var(--b3-theme-background));
+    border-radius: 999px;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .history-label {
+    font-size: 13px;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+
+  .history-pin {
+    border: 1px solid var(--b3-theme-border);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-surface);
+    border-radius: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    min-width: 40px;
+  }
+
+  .history-pin.active-pin {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest, var(--b3-theme-background));
+  }
+
+  .sql-filter-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .filter-sql {

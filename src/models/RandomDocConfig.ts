@@ -112,6 +112,11 @@ class RandomDocConfig {
   tags: string[] = []
 
   /**
+   * ??????????????
+   */
+  public filterHistory: Array<any> = []
+
+  /**
    * 2.9 渐进模式配置ID
    * 用于存储渐进模式的配置数据
    */
