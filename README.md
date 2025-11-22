@@ -263,6 +263,7 @@
 <li><strong>⚡ Faster mobile jump</strong>: Reduced delay from 300ms to 100ms to improve responsiveness.</li>
 <li><strong>🧭 Side-by-side filters</strong>: Filter mode and filter content now share one row, saving vertical space.</li>
 <li><strong>🗂 Filter history</strong>: Keeps the latest 10 filter choices, supports pinning to avoid overwriting, and can be applied quickly from the filter header.</li>
+<li><strong>📊 Roaming count sort table</strong>: Added a new "Roaming Count Sort Table" tab in the sidebar, displaying all documents sorted by roaming count in descending order, with support for refreshing the list, opening documents, and resetting individual document roaming counts to zero.</li>
 </ul>
 </li>
 <li style="margin: 0.3em 0;"><strong style="color: #ef4444;">🐛 Bug Fixes</strong>

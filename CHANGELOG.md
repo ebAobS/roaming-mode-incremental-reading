@@ -7,6 +7,7 @@
 * 优化移动端跳转响应速度：将延迟从300ms优化到100ms，提升操作流畅度
 * 筛选方式与筛选内容改为左右并排展示，减少面板竖向空间占用
 * 新增筛选历史：记录最近 10 次筛选选择（支持钉住防覆盖），筛选区域右上可快速查看并一键应用历史记录
+* 新增漫游次数排序表：在侧边栏新增"漫游次数排序表"标签页，按漫游次数降序展示所有文档，支持刷新列表、点击打开文档、清0单个文档的漫游次数
 
 ### Bug Fixes
 * 修复移动端浮窗点击无响应的问题，确保点击后能正确触发漫游并跳转
@@ -169,4 +170,5 @@
 * Added priority calculation based on parameters
 * Implemented roulette wheel algorithm for document recommendation
 * Added support for notebook and root document filtering
+* Added support for completely random "one-pass" mode
 * Added support for completely random "one-pass" mode
