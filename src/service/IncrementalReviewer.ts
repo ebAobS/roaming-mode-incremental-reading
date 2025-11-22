@@ -184,6 +184,28 @@ class IncrementalReviewer {
       
       // 3.1.4 检查是否存在符合条件的文档
       if (totalDocCount === 0) {
+        // 3.1.4.1 检查是否开启自动重载功能
+        if (targetConfig.excludeVisited && targetConfig.autoReloadWhenEmpty) {
+          this.pluginInstance.logger.info("没有可用文档，但开启了自动重载功能，将清除访问记录并重新开始")
+          showMessage("所有文档已访问，自动重载...", 2000, "info")
+          
+          // 3.1.4.2 清除访问记录
+          try {
+            await this.resetVisited(filterCondition)
+            this.pluginInstance.logger.info("访问记录已清除，重新获取文档")
+            
+            // 3.1.4.3 递归调用自己重新获取文档（这次应该有文档了）
+            // 为了避免无限递归，我们临时关闭 autoReloadWhenEmpty
+            const tempConfig = { ...targetConfig, autoReloadWhenEmpty: false }
+            return await this.getRandomDoc(tempConfig)
+          } catch (resetError) {
+            this.pluginInstance.logger.error("自动重载失败:", resetError)
+            showMessage("自动重载失败: " + resetError.message, 5000, "error")
+            throw resetError
+          }
+        }
+        
+        // 3.1.4.4 未开启自动重载或不满足条件，显示错误
         const errorMsg = this.storeConfig.excludeVisited 
           ? "所有文档都已访问过，可以重置访问记录或关闭排除已访问选项" 
           : "没有找到符合条件的文档";
