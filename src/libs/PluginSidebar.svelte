@@ -27,8 +27,7 @@
   ]
 
   let activeTab = 0
-  let probabilityTip = "等待漫游，点击下方按钮开始。"
-
+  let probabilityTip = "等待漫游，点击下方按钮开始"
   let isLoading = false
   let metricsLoading = false
   let priorityLoading = false
@@ -231,6 +230,7 @@
     }
   }
 
+  const filterHistoryStoreKey = "sidebarFilterHistory"
   const generateHistoryId = () =>
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
       ? crypto.randomUUID()
@@ -250,7 +250,6 @@
     const normalizedB = normalizeHistoryState(b.state || {})
     return JSON.stringify(normalizedA) === JSON.stringify(normalizedB)
   }
-
   const getFilterModeLabel = (mode: FilterMode) => {
     switch (mode) {
       case FilterMode.Notebook:
@@ -289,7 +288,7 @@
     }
   }
 
-  const sortHistory = (items: FilterHistoryItem[]) =>
+const sortHistory = (items: FilterHistoryItem[]) =>
     [...items].sort((a, b) => {
       if (a.pinned && !b.pinned) return -1
       if (b.pinned && !a.pinned) return 1
@@ -311,6 +310,31 @@
     }
   }
 
+  const persistFilterHistory = async (items: FilterHistoryItem[]) => {
+    filterHistory = sortHistory(items)
+    if (storeConfig) {
+      ;(storeConfig as any).filterHistory = filterHistory
+      await pluginInstance.saveData(storeName, storeConfig)
+    }
+    await pluginInstance.saveData(filterHistoryStoreKey, filterHistory)
+  }
+
+  const loadFilterHistory = async () => {
+    try {
+      const saved = await pluginInstance.loadData(filterHistoryStoreKey)
+      const legacy = (storeConfig as any)?.filterHistory
+      const source = Array.isArray(saved) ? saved : Array.isArray(legacy) ? legacy : []
+      filterHistory = sortHistory(source as FilterHistoryItem[])
+      if (storeConfig) {
+        ;(storeConfig as any).filterHistory = filterHistory
+      }
+    } catch (error) {
+      pluginInstance.logger.warn("加载筛选历史失败", error)
+      filterHistory = []
+    }
+  }
+
+
   const recordFilterHistory = async (mode: FilterMode) => {
     if (!storeConfig) return
     const state = buildHistoryState(mode)
@@ -329,16 +353,13 @@
     const updated = [{ ...newEntry, pinned: preservedPinned }, ...withoutMatch]
     const pinnedItems = updated.filter((item) => item.pinned)
     const unpinnedItems = updated.filter((item) => !item.pinned).slice(0, MAX_FILTER_HISTORY)
-    filterHistory = sortHistory([...pinnedItems, ...unpinnedItems])
-    storeConfig.filterHistory = filterHistory
-    await pluginInstance.saveData(storeName, storeConfig)
+    await persistFilterHistory([...pinnedItems, ...unpinnedItems])
   }
 
   const togglePinHistory = async (id: string) => {
     if (!storeConfig) return
-    filterHistory = sortHistory(filterHistory.map((item) => (item.id === id ? { ...item, pinned: !item.pinned } : item)))
-    storeConfig.filterHistory = filterHistory
-    await pluginInstance.saveData(storeName, storeConfig)
+    const updated = filterHistory.map((item) => (item.id === id ? { ...item, pinned: !item.pinned } : item))
+    await persistFilterHistory(updated)
   }
 
   const applyFilterHistoryItem = async (item: FilterHistoryItem) => {
@@ -363,6 +384,7 @@
 
   const onFilterModeChange = async (skipHistory = false) => {
     storeConfig.filterMode = filterMode
+    await pluginInstance.saveData(storeName, storeConfig)
     if (filterMode === FilterMode.Tag) {
       await loadAvailableTags()
     }
@@ -389,6 +411,7 @@
 
   const onNotebookChange = async () => {
     storeConfig.notebookId = selectedNotebooks.join(",")
+    await pluginInstance.saveData(storeName, storeConfig)
     pr = null
     await ensureReviewer()
     await recordFilterHistory(FilterMode.Notebook)
@@ -414,6 +437,7 @@
 
   const confirmTagSelection = async () => {
     storeConfig.tags = selectedTags
+    await pluginInstance.saveData(storeName, storeConfig)
     showTagDropdown = false
     pr = null
     await ensureReviewer()
@@ -423,6 +447,7 @@
   const clearAllTags = async () => {
     selectedTags = []
     storeConfig.tags = []
+    await pluginInstance.saveData(storeName, storeConfig)
     showTagDropdown = false
     pr = null
     await ensureReviewer()
@@ -431,6 +456,7 @@
 
   const applySqlQuery = async () => {
     storeConfig.sqlQuery = sqlQuery || ""
+    await pluginInstance.saveData(storeName, storeConfig)
     pr = null
     await ensureReviewer()
     await recordFilterHistory(FilterMode.SQL)
@@ -449,7 +475,7 @@
         document.execCommand("copy")
         textarea.remove()
       }
-      showMessage("SQL 已复制", 2000, "info")
+    showMessage("SQL 已复制", 2000, "info")
     } catch (error) {
       pluginInstance.logger.error("复制 SQL 失败", error)
       showMessage("复制失败，请手动复制", 2000, "error")
@@ -1038,6 +1064,7 @@
         }
       }
     }
+    await loadFilterHistory()
     await loadSqlExamples()
     await refreshRecommendations()
   })
@@ -1703,8 +1730,8 @@
   }
 
   .filter-section-title {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--b3-theme-on-surface);
   }
 
