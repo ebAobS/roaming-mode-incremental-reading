@@ -389,7 +389,6 @@
 
   const onNotebookChange = async () => {
     storeConfig.notebookId = selectedNotebooks.join(",")
-    await pluginInstance.saveData(storeName, storeConfig)
     pr = null
     await ensureReviewer()
     await recordFilterHistory(FilterMode.Notebook)
