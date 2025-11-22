@@ -475,6 +475,20 @@
           </div>
           <div class="form-row">
             <div class="form-group">
+              <h4 class="setting-title">排除已访问文档</h4>
+              <label>
+                <input
+                  type="checkbox"
+                  bind:checked={excludeVisited}
+                  disabled={$isLocked}
+                />
+                勾选后已漫游的文档不会重复出现，不勾选可能再次漫游
+              </label>
+            </div>
+          </div>
+          {#if excludeVisited}
+          <div class="form-row">
+            <div class="form-group">
               <h4 class="setting-title">自动重载漫游</h4>
               <label>
                 <input
@@ -487,6 +501,7 @@
               <p class="help-text">仅在开启"排除已访问文档"时生效</p>
             </div>
           </div>
+          {/if}
           <div class="form-row">
             <div class="form-group">
               <h4 class="setting-title">{pluginInstance.i18n.enableDebugLog}</h4>
