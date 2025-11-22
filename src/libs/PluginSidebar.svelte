@@ -1955,6 +1955,8 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     max-height: 240px;
     overflow-y: auto;
     color: var(--b3-theme-on-surface);
+    display: flex;
+    flex-direction: column;
   }
 
   .dropdown-item {
@@ -1971,11 +1973,14 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   }
 
   .confirm-buttons {
+    position: sticky;
+    bottom: 0;
     display: flex;
     gap: 8px;
     padding: 8px;
     border-top: 1px solid var(--b3-theme-border);
-    background: var(--b3-theme-surface);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0), var(--b3-theme-surface));
+    margin-top: auto;
   }
 
   .confirm-btn {
