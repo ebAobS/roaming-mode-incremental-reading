@@ -20,25 +20,37 @@ export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
   const button = document.createElement("div")
   button.id = "incremental-reading-floating-btn"
   button.className = "incremental-reading-floating"
+  
+  // 从localStorage加载保存的位置
+  const savedPos = localStorage.getItem("incremental-reading-floating-pos")
+  let posStyle = "bottom: 80px; right: 20px;"
+  if (savedPos) {
+    try {
+      const pos = JSON.parse(savedPos)
+      posStyle = `top: ${pos.top}px; left: ${pos.left}px;`
+    } catch (e) {
+      console.error("加载浮动按钮位置失败", e)
+    }
+  }
+  
   button.style.cssText = `
     position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 30px;
-    height: 30px;
+    ${posStyle}
+    width: 40px;
+    height: 40px;
     background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
     border-radius: 50%;
     box-shadow: 0 2px 12px rgba(6, 182, 212, 0.4);
-    cursor: pointer;
+    cursor: move;
     z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
     user-select: none;
     opacity: 0.9;
   `
-  button.innerHTML = `<div style="color: white;font-size: 12px;display: flex;align-items: center;justify-content: center;width: 100%;height: 100%;">${icons.iconTopbar}</div>`
+  button.innerHTML = `<div style="color: white;font-size: 16px;display: flex;align-items: center;justify-content: center;width: 100%;height: 100%;">${icons.iconTopbar}</div>`
 
   button.addEventListener("mouseenter", () => {
     button.style.transform = "scale(1.1)"
@@ -47,6 +59,89 @@ export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
   button.addEventListener("mouseleave", () => {
     button.style.transform = "scale(1)"
     button.style.boxShadow = "0 2px 12px rgba(6, 182, 212, 0.4)"
+  })
+
+  // 拖动功能
+  let isDragging = false
+  let hasMoved = false
+  let justDragged = false
+  let startX = 0
+  let startY = 0
+  let initialLeft = 0
+  let initialTop = 0
+
+  button.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0]
+    isDragging = true
+    hasMoved = false
+    justDragged = false
+    startX = touch.clientX
+    startY = touch.clientY
+    
+    const rect = button.getBoundingClientRect()
+    initialLeft = rect.left
+    initialTop = rect.top
+    
+    button.style.transition = "none"
+  })
+
+  button.addEventListener("touchmove", (e) => {
+    if (!isDragging) return
+    
+    const touch = e.touches[0]
+    const deltaX = touch.clientX - startX
+    const deltaY = touch.clientY - startY
+    
+    // 如果移动超过5px，认为是拖动
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      hasMoved = true
+      
+      const newLeft = initialLeft + deltaX
+      const newTop = initialTop + deltaY
+      
+      // 限制在屏幕范围内
+      const maxLeft = window.innerWidth - button.offsetWidth
+      const maxTop = window.innerHeight - button.offsetHeight
+      
+      const boundedLeft = Math.max(0, Math.min(newLeft, maxLeft))
+      const boundedTop = Math.max(0, Math.min(newTop, maxTop))
+      
+      button.style.left = boundedLeft + "px"
+      button.style.top = boundedTop + "px"
+      button.style.right = "auto"
+      button.style.bottom = "auto"
+      
+      e.preventDefault()
+    }
+  })
+
+  button.addEventListener("touchend", (e) => {
+    if (isDragging) {
+      isDragging = false
+      button.style.transition = "box-shadow 0.3s ease, transform 0.3s ease"
+      
+      if (hasMoved) {
+        justDragged = true
+        
+        // 保存位置到localStorage
+        const rect = button.getBoundingClientRect()
+        localStorage.setItem("incremental-reading-floating-pos", JSON.stringify({
+          left: rect.left,
+          top: rect.top
+        }))
+        
+        // 阻止点击事件
+        e.preventDefault()
+        e.stopPropagation()
+        
+        // 300ms后重置标记
+        setTimeout(() => {
+          justDragged = false
+        }, 300)
+      }
+      
+      hasMoved = false
+    }
   })
 
   let dialogHost: HTMLElement | null = null
@@ -90,6 +185,11 @@ export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
   }
 
   button.addEventListener("click", async () => {
+    // 如果刚刚发生了拖动，不执行点击
+    if (justDragged) {
+      return
+    }
+    
     // 移动端直接漫游策略：获取随机文档 → 使用 openMobileFileById 打开
     try {
       // console.log("[移动端漫游] 开始...")
