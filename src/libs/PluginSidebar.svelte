@@ -5,7 +5,7 @@
 
 <script lang="ts">
   import { onMount } from "svelte"
-  import { openTab, showMessage } from "siyuan"
+  import { openMobileFileById, openTab, showMessage } from "siyuan"
   import RandomDocPlugin from "../index"
   import { storeName } from "../Constants"
   import RandomDocConfig, { FilterMode, ReviewMode } from "../models/RandomDocConfig"
@@ -151,7 +151,7 @@
 
   export function triggerRoam() {
     switchTab(0)
-    doIncrementalRandomDoc()
+    return doIncrementalRandomDoc()
   }
 
   export function openVisitedTab() {
@@ -825,7 +825,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     const docId = e.detail.id
     if (!docId) return
     try {
-      await openTab({ app: pluginInstance.app, doc: { id: docId } })
+      await openDoc(docId)
     } catch (error) {
       pluginInstance.logger.error("打开文档失败", error)
       showMessage("打开文档失败: " + error.message, 3000, "error")
@@ -925,7 +925,10 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   }
 
   const openDoc = (docId: string) => {
-    openTab({ app: pluginInstance.app, doc: { id: docId } })
+    if (pluginInstance.isMobile) {
+      return openMobileFileById(pluginInstance.app, docId, [])
+    }
+    return openTab({ app: pluginInstance.app, doc: { id: docId } })
   }
 
   const openRecommendationDoc = async (docId: string) => {
@@ -948,7 +951,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       if (currentTabKey === "roamingCount") {
         await loadRoamingCountList()
       }
-      await openTab({ app: pluginInstance.app, doc: { id: docId } })
+      await openDoc(docId)
     } catch (error: any) {
       pluginInstance.logger.error("打开推荐文档失败", error)
       showMessage("打开推荐文档失败: " + (error?.message || error), 3000, "error")
@@ -1048,7 +1051,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       }
       await refreshRecommendations()
 
-      await openTab({ app: pluginInstance.app, doc: { id: currentRndId } })
+      await openDoc(currentRndId)
     } catch (error: any) {
       pluginInstance.logger.error("漫游失败", error)
       showMessage("漫游失败: " + (error?.message || error), 3000, "error")

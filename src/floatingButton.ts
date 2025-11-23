@@ -189,7 +189,17 @@ export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
     if (justDragged) {
       return
     }
-    
+
+    const dockInstance = pluginInstance.dockContentInstance as any
+    if (dockInstance?.triggerRoam) {
+      try {
+        await dockInstance.triggerRoam()
+        return
+      } catch (error) {
+        pluginInstance.logger?.error("侧栏漫游调用失败，使用兜底逻辑", error)
+      }
+    }
+
     // 移动端直接漫游策略：获取随机文档 → 使用 openMobileFileById 打开
     try {
       // console.log("[移动端漫游] 开始...")
