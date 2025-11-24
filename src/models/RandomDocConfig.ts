@@ -138,6 +138,8 @@ class RandomDocConfig {
   public recommendMaxCandidates: number = 120
   /** 推荐 - 采样段落数上限 */
   public recommendMaxParagraphs: number = 8
+  /** 推荐 - 是否自动对齐推荐优先级 */
+  public autoAlignRecommendationPriority: boolean = false
 
   /**
    * 2.12 是否在启动时自动重置已访问文档记录
@@ -175,6 +177,7 @@ class RandomDocConfig {
     this.recommendTopK = this.recommendTopK ?? 8
     this.recommendMaxCandidates = this.recommendMaxCandidates ?? 120
     this.recommendMaxParagraphs = this.recommendMaxParagraphs ?? 8
+    this.autoAlignRecommendationPriority = this.autoAlignRecommendationPriority ?? false
   }
 
   /**

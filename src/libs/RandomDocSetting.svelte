@@ -56,6 +56,18 @@
   let recommendTopK = 8
   let recommendMaxCandidates = 120
   let recommendMaxParagraphs = 8
+  let autoAlignRecommendationPriority = false
+  const priorityAlignHelpText = `
+优先级对齐，是将智能推荐的文档的优先级数值分布调整为与相关性百分比值的分布一致，并保持极值不变。
+调整方法大致为将相关性值归一化，再反归一化为优先级的值。
+如果您的思源的文档数量很多，不可能逐一自行调整优先级，这个功能可大大加快文档您对众多文档的优先级管理。
+具体数值调整的算法：
+①. 设推荐的文档数量为x，找到列表所有文档中原先的优先级的最大值d与最小值s，如果d-s小于3，则增加d减小s，使d-s=3，如果d-s大于或等于3，则d和s都不变，称d-s为极差。
+②. 将推荐文档的相关性数值归一化，设推荐文档的相关性从小到大为r1,r2,...,rx，归一化公式：ki=(ri-r1)/(rx-r1)得到k1，k2,...,kx值，一定有：k1=0，kx=1。
+③. 将k1，k2,...,kx反归一化，算法是②的逆向操作，最小值是s，最大值是d，得到t1,t2...,tx，这样就得到了极差不变，分布与相关性一致的数据
+④. 更新优先级，相关性最小的文档优先级更新为k1，第二小的文档优先级更新为k2，...，相关性最大的文档的优先级更新为kx。
+  `.trim()
+  const showPriorityAlignHelp = () => alert(priorityAlignHelpText)
 
   const onSaveSetting = async () => {
     try {
@@ -70,6 +82,7 @@
       storeConfig.recommendTopK = Number(recommendTopK) || 3
       storeConfig.recommendMaxCandidates = Number(recommendMaxCandidates) || 50
       storeConfig.recommendMaxParagraphs = Number(recommendMaxParagraphs) || 8
+      storeConfig.autoAlignRecommendationPriority = autoAlignRecommendationPriority
       await pluginInstance.saveData(storeName, storeConfig)
       pluginInstance.setDebugLogEnabled(enableDebugLog)
       
@@ -410,6 +423,7 @@
     recommendTopK = storeConfig?.recommendTopK ?? 8
     recommendMaxCandidates = storeConfig?.recommendMaxCandidates ?? 120
     recommendMaxParagraphs = storeConfig?.recommendMaxParagraphs ?? 8
+    autoAlignRecommendationPriority = storeConfig?.autoAlignRecommendationPriority ?? false
       
     // 如果当前是渐进模式，初始化渐进配置
     if (reviewMode === "incremental") {
@@ -802,6 +816,25 @@
             </div>
           </div>
         </div>
+
+        <div class="config-section">
+          <h4>优先级对齐</h4>
+          <div class="form-row align-center space-between">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  bind:checked={autoAlignRecommendationPriority}
+                  disabled={$isLocked}
+                  readonly={$isLocked}
+                />
+                自动对齐优先级
+              </label>
+              <p class="help-text">勾选后，每次漫游生成推荐列表后自动按相关性对齐优先级</p>
+            </div>
+            <button class="b3-button mini-help-btn" on:click={showPriorityAlignHelp} title="优先级对齐说明">?</button>
+          </div>
+        </div>
       </div>
     {/if}
     
@@ -859,6 +892,21 @@
     font-size: 12px;
     color: var(--b3-theme-on-surface-light);
     margin-bottom: 10px;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    color: var(--b3-theme-on-background);
+  }
+
+  .mini-help-btn {
+    width: 32px;
+    min-width: 32px;
+    padding: 0;
+    font-weight: 700;
   }
   
   .config-section {

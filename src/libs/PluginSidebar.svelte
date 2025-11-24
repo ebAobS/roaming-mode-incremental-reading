@@ -96,6 +96,17 @@
   let recommendMaxCandidates = 120
   let recommendMaxParagraphs = 8
   let aligningRecommendationPriority = false
+  let autoAlignRecommendationPriority = false
+  const priorityAlignHelpText = `
+优先级对齐，是将智能推荐的文档的优先级数值分布调整为与相关性百分比值的分布一致，并保持极值不变。
+调整方法大致为将相关性值归一化，再反归一化为优先级的值。
+如果您的思源的文档数量很多，不可能逐一自行调整优先级，这个功能可大大加快文档您对众多文档的优先级管理。
+具体数值调整的算法：
+①. 设推荐的文档数量为x，找到列表所有文档中原先的优先级的最大值d与最小值s，如果d-s小于3，则增加d减小s，使d-s=3，如果d-s大于或等于3，则d和s都不变，称d-s为极差。
+②. 将推荐文档的相关性数值归一化，设推荐文档的相关性从小到大为r1,r2,...,rx，归一化公式：ki=(ri-r1)/(rx-r1)得到k1，k2,...,kx值，一定有：k1=0，kx=1。
+③. 将k1，k2,...,kx反归一化，算法是②的逆向操作，最小值是s，最大值是d，得到t1,t2...,tx，这样就得到了极差不变，分布与相关性一致的数据
+④. 更新优先级，相关性最小的文档优先级更新为k1，第二小的文档优先级更新为k2，...，相关性最大的文档的优先级更新为kx。
+  `.trim()
 
   type FilterHistoryState = {
     notebookIds?: string[]
@@ -191,6 +202,7 @@
     recommendTopK = cfg.topK
     recommendMaxCandidates = cfg.maxCandidates
     recommendMaxParagraphs = cfg.maxParagraphs
+    autoAlignRecommendationPriority = !!storeConfig?.autoAlignRecommendationPriority
   }
 
   const persistRecommendationConfig = async () => {
@@ -199,6 +211,7 @@
     storeConfig.recommendTopK = recommendTopK
     storeConfig.recommendMaxCandidates = recommendMaxCandidates
     storeConfig.recommendMaxParagraphs = recommendMaxParagraphs
+    storeConfig.autoAlignRecommendationPriority = autoAlignRecommendationPriority
     await pluginInstance.saveData(storeName, storeConfig)
   }
 
@@ -230,6 +243,8 @@
       })
       if (recommendations.length === 0) {
         recommendError = "暂无推荐，请先多漫游几篇文档"
+      } else if (autoAlignRecommendationPriority && !aligningRecommendationPriority) {
+        await alignRecommendationPriorities(true)
       }
     } catch (error: any) {
       pluginInstance.logger.error("刷新推荐失败", error)
@@ -239,7 +254,11 @@
     }
   }
 
-  const alignRecommendationPriorities = async () => {
+  const showPriorityAlignHelp = () => {
+    alert(priorityAlignHelpText)
+  }
+
+  const alignRecommendationPriorities = async (silent = false) => {
     if (recommendations.length === 0) {
       showMessage("暂无推荐数据，无法对齐优先级", 3000, "info")
       return
@@ -333,7 +352,9 @@
       if (currentRndId && docIds.includes(currentRndId)) {
         await refreshCurrentDocMetrics()
       }
-      showMessage("已根据推荐相关性对齐优先级", 3000, "info")
+      if (!silent) {
+        showMessage("已根据推荐相关性对齐优先级", 3000, "info")
+      }
     } catch (error: any) {
       pluginInstance.logger.error("推荐优先级对齐失败", error)
       showMessage("优先级对齐失败: " + (error?.message || error), 4000, "error")
@@ -1064,6 +1085,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
 
   const doIncrementalRandomDoc = async () => {
     storeConfig = await pluginInstance.safeLoad(storeName)
+    syncRecommendationConfig()
     if (storeConfig.filterMode === FilterMode.SQL && (!storeConfig.sqlQuery || storeConfig.sqlQuery.trim() === "")) {
       showMessage("请输入SQL查询语句", 3000, "info")
       return
@@ -1171,6 +1193,10 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     storeConfig = await pluginInstance.safeLoad(storeName)
     if (!storeConfig.reviewMode) {
       storeConfig.reviewMode = ReviewMode.Incremental
+      await pluginInstance.saveData(storeName, storeConfig)
+    }
+    if (storeConfig.autoAlignRecommendationPriority === undefined) {
+      storeConfig.autoAlignRecommendationPriority = false
       await pluginInstance.saveData(storeName, storeConfig)
     }
     syncRecommendationConfig()
@@ -1425,7 +1451,6 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       </div>
 
       <div class="section">
-        <div class="section-title">文档指标 / 优先级</div>
         {#if currentRndId && docMetrics.length > 0}
           <MetricsPanel
             pluginInstance={pluginInstance}
@@ -1452,17 +1477,32 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       </div>
 
       <div class="section recommendation-section">
-        <div class="section-title">智能推荐</div>
-        <div class="toolbar-row">
-          <button class="secondary-button" on:click={refreshRecommendations} disabled={recommendLoading}>
-            {recommendLoading ? "生成中..." : "刷新推荐"}
-          </button>
+        <div class="toolbar-row recommendation-toolbar">
+          <h4 class="recommendation-heading">智能推荐</h4>
+          {#if !autoAlignRecommendationPriority}
+            <div class="align-actions">
+              <button
+                class="secondary-button recommend-action-button align-btn"
+                on:click={() => alignRecommendationPriorities()}
+                disabled={recommendLoading || aligningRecommendationPriority || recommendations.length === 0}
+              >
+                {aligningRecommendationPriority ? "对齐中..." : "优先级对齐"}
+              </button>
+              <button
+                class="secondary-button recommend-action-button help-btn"
+                on:click={showPriorityAlignHelp}
+                title="优先级对齐说明"
+              >
+                ?
+              </button>
+            </div>
+          {/if}
           <button
-            class="secondary-button"
-            on:click={alignRecommendationPriorities}
-            disabled={recommendLoading || aligningRecommendationPriority || recommendations.length === 0}
+            class="secondary-button recommend-action-button refresh-btn"
+            on:click={refreshRecommendations}
+            disabled={recommendLoading}
           >
-            {aligningRecommendationPriority ? "对齐中..." : "优先级对齐"}
+            {recommendLoading ? "生成中..." : "刷新推荐"}
           </button>
         </div>
         {#if recommendLoading}
@@ -2291,6 +2331,81 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     display: flex;
     gap: 8px;
     margin: 8px 0;
+    align-items: center;
+  }
+
+  .recommendation-toolbar {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .align-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .recommendation-heading {
+    margin: 0;
+    font-size: 14px;
+    color: var(--b3-theme-on-surface);
+    font-weight: 600;
+    flex: 1 1 auto;
+  }
+
+  .recommend-action-button {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--b3-theme-primary) 60%, transparent);
+    color: var(--b3-theme-primary);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    min-height: 40px;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--b3-theme-primary) 18%, transparent);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, color 0.2s ease, background 0.2s ease;
+    background: var(--b3-theme-primary-lightest, var(--b3-theme-surface));
+    border-radius: 8px;
+  }
+
+  .recommend-action-button.align-btn {
+    background: var(--b3-theme-primary-lightest, var(--b3-theme-surface));
+    border-color: var(--b3-theme-primary);
+  }
+
+  .recommend-action-button.help-btn {
+    width: 36px;
+    min-width: 36px;
+    padding: 0;
+    font-weight: 700;
+    background: var(--b3-theme-surface);
+  }
+
+  .recommend-action-button.refresh-btn {
+    background: var(--b3-theme-primary-lighter, var(--b3-theme-primary-lightest, var(--b3-theme-surface)));
+    border-color: var(--b3-theme-primary-light, var(--b3-theme-primary));
+  }
+
+  .recommend-action-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px color-mix(in srgb, var(--b3-theme-primary) 28%, transparent);
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary, #fff);
+  }
+
+  .recommend-action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+    color: var(--b3-theme-on-surface-light);
+    background: var(--b3-theme-surface);
+  }
+
+  .recommend-action-button:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: 2px;
   }
 
   .priority-list,
