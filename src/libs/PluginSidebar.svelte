@@ -95,6 +95,7 @@
   let recommendTopK = 8
   let recommendMaxCandidates = 120
   let recommendMaxParagraphs = 8
+  let aligningRecommendationPriority = false
 
   type FilterHistoryState = {
     notebookIds?: string[]
@@ -235,6 +236,109 @@
       recommendError = error?.message || "推荐失败"
     } finally {
       recommendLoading = false
+    }
+  }
+
+  const alignRecommendationPriorities = async () => {
+    if (recommendations.length === 0) {
+      showMessage("暂无推荐数据，无法对齐优先级", 3000, "info")
+      return
+    }
+
+    aligningRecommendationPriority = true
+    try {
+      const reviewer = await ensureReviewer()
+      const docIds = recommendations.map((item) => item.id)
+      const priorityResults = await reviewer.batchGetDocumentPriorities(docIds)
+      const priorityMap = new Map<string, number>()
+      priorityResults.forEach((item) => priorityMap.set(item.docId, item.priority))
+
+      const priorityValues = docIds.map((id) => priorityMap.get(id) ?? 5.0)
+      if (priorityValues.length === 0) {
+        showMessage("未获取到可对齐的优先级数据", 3000, "info")
+        return
+      }
+
+      let minPriority = Math.min(...priorityValues)
+      let maxPriority = Math.max(...priorityValues)
+      if (!isFinite(minPriority) || !isFinite(maxPriority)) {
+        showMessage("优先级数据异常，无法对齐", 3000, "error")
+        return
+      }
+
+      const currentRange = maxPriority - minPriority
+      if (currentRange < 3) {
+        const expand = (3 - currentRange) / 2
+        minPriority -= expand
+        maxPriority += expand
+      }
+      const targetRange = maxPriority - minPriority
+
+      const sortedByScore = [...recommendations].sort((a, b) => a.score - b.score)
+      const minScore = sortedByScore[0].score
+      const maxScore = sortedByScore[sortedByScore.length - 1].score
+      const scoreRange = maxScore - minScore
+
+      // 按相关性分布映射到扩展后的优先级区间，极值保持并拉伸到至少 3 的跨度
+      const normalized = sortedByScore.map((item) => ({
+        id: item.id,
+        normalized: scoreRange === 0 ? 0.5 : (item.score - minScore) / scoreRange,
+      }))
+
+      const clamp = (v: number) => Math.max(0, Math.min(10, v))
+      const targetPriorities = normalized.map(({ id, normalized }) => ({
+        id,
+        priority: clamp(minPriority + targetRange * normalized),
+      }))
+
+      const metrics = reviewer.getMetrics()
+      const totalWeight = metrics.reduce((sum, m) => sum + m.weight, 0)
+      const docPriorityDataList = await reviewer.batchGetDocPriorityData(docIds)
+      const docPriorityMap = new Map(docPriorityDataList.map((d) => [d.docId, d]))
+
+      for (const item of targetPriorities) {
+        const docData = docPriorityMap.get(item.id)
+        if (!docData) continue
+
+        const oldPriority =
+          totalWeight > 0
+            ? metrics.reduce((sum, metric) => sum + (docData.metrics[metric.id] || 0) * metric.weight, 0) /
+              totalWeight
+            : 0
+
+        const newMetrics = new Map<string, number>()
+        if (oldPriority <= 0) {
+          metrics.forEach((metric) => {
+            const value = totalWeight > 0 ? item.priority * (metric.weight / totalWeight) : 0
+            newMetrics.set(metric.id, clamp(value))
+          })
+        } else {
+          const ratio = item.priority / oldPriority
+          metrics.forEach((metric) => {
+            const value = (docData.metrics[metric.id] || 0) * ratio
+            newMetrics.set(metric.id, clamp(value))
+          })
+        }
+
+        await Promise.all(
+          metrics.map((metric) => reviewer.updateDocMetric(item.id, metric.id, newMetrics.get(metric.id) || 0))
+        )
+        await reviewer.updateDocPriority(item.id, item.priority)
+      }
+
+      await refreshPriorityBarPoints()
+      if (currentTabKey === "priority") {
+        await loadPriorityList()
+      }
+      if (currentRndId && docIds.includes(currentRndId)) {
+        await refreshCurrentDocMetrics()
+      }
+      showMessage("已根据推荐相关性对齐优先级", 3000, "info")
+    } catch (error: any) {
+      pluginInstance.logger.error("推荐优先级对齐失败", error)
+      showMessage("优先级对齐失败: " + (error?.message || error), 4000, "error")
+    } finally {
+      aligningRecommendationPriority = false
     }
   }
 
@@ -1352,6 +1456,13 @@ const sortHistory = (items: FilterHistoryItem[]) =>
         <div class="toolbar-row">
           <button class="secondary-button" on:click={refreshRecommendations} disabled={recommendLoading}>
             {recommendLoading ? "生成中..." : "刷新推荐"}
+          </button>
+          <button
+            class="secondary-button"
+            on:click={alignRecommendationPriorities}
+            disabled={recommendLoading || aligningRecommendationPriority || recommendations.length === 0}
+          >
+            {aligningRecommendationPriority ? "对齐中..." : "优先级对齐"}
           </button>
         </div>
         {#if recommendLoading}

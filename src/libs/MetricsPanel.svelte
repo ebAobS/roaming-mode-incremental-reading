@@ -383,6 +383,7 @@
 
 
 
+  // 当用户直接修改总优先级时，需将每个指标同步按比例缩放以保持占比一致
   async function handlePriorityInput() {
     let newValue = parseFloat(priorityInputValue)
     if (isNaN(newValue)) {
@@ -392,7 +393,7 @@
     newValue = Math.max(0, Math.min(10, newValue))
     const oldPriority = totalPriority
     if (oldPriority === 0) {
-      // 全部设为新优先级/权重和
+      // 没有旧优先级时按指标权重重新分配指标值，保持初始权重比例
       let totalWeight = 0
       metrics.forEach(m => totalWeight += m.weight)
       metrics.forEach(metric => {
@@ -400,6 +401,7 @@
         docMetrics.set(metric.id, v)
       })
     } else {
+      // 有旧优先级时直接按照新旧优先级比值拉伸所有指标，实现等比例缩放
       const ratio = newValue / oldPriority
       metrics.forEach(metric => {
         const oldVal = docMetrics.get(metric.id) || 0
