@@ -69,24 +69,49 @@
             </li>
         </ul>
     </div>
-    <!-- Core Philosophy -->
-    <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #fef7ff, #fdf2f8); border: 1px solid #f9a8d4; border-radius: 8px; box-shadow: 0 4px 12px rgba(236,72,153,0.15);">
-        <h2 style="color: #be185d; margin: 0 0 1em; text-align: center; font-size: 1.3em;">💡 Core Philosophy</h2>
-        <div style="background: white; padding: 1.5em; border-radius: 8px; border-left: 4px solid #ec4899;">
-            <p style="margin: 0.5em 0; line-height: 1.6;"><strong>Incremental reading should be distinguished from flashcards:</strong></p>
-            <ul style="margin: 0.5em 0; padding-left: 1.2em;">
-                <li style="margin: 0.3em 0;"><strong>Flashcards</strong> are based on the <strong>forgetting curve</strong>. The SiYuan flashcard system + FSRS algorithm is already mature. Years of using Anki and SuperMemo show that the "minimum information principle" is crucial for cards.</li>
-                <li style="margin: 0.3em 0;"><strong>Incremental reading</strong> deals with large text blocks, which inherently do not fit the "minimum information principle". Most current solutions still use forgetting curve-based algorithms (like FSRS) for article review, which is not reasonable.</li>
-            </ul>
-            <p style="margin: 0.5em 0; line-height: 1.6;">For a long article, it is difficult to <strong>use only memory level</strong> as the standard for whether it should <strong>be recommended for review next time</strong>. The real <strong>criteria should be multi-dimensional</strong>, such as difficulty, progress, importance, urgency, interest, etc.</p>
-            <p style="margin: 0.5em 0; line-height: 1.6;"><strong>In short, the core purpose of incremental reading is not to "fight forgetting", but to achieve a stress-free "read later" experience, and ultimately to efficiently learn a large amount of material simultaneously.</strong></p>
-        </div>
-    </div>
     <!-- Core Features -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1px solid #bae6fd; border-radius: 8px; box-shadow: 0 4px 12px rgba(14,165,233,0.15);">
         <h2 style="color: #0ea5e9; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Core Features</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">🎯 <strong>Embrace Document Priority</strong> - Maintain document priorities yourself and use them as the roaming recommendation source, based on roulette (higher priority → higher probability) or absolute ordering (always pick the highest priority first)</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #ec4899; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        💡 <strong>Incremental Reading Core: Read Later</strong> — Not Fighting Forgetting
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <p style="margin: 0.4em 0;">Flashcard review algorithms are based on the forgetting curve, and the SiYuan flashcard system + FSRS algorithm is already mature. Years of experience with Anki and SuperMemo show that the "minimum information principle" is crucial for cards.</p>
+                        <p style="margin: 0.4em 0;"><strong>Incremental reading</strong> deals with large text blocks, which inherently do not fit the "minimum information principle". Most current incremental reading solutions habitually use forgetting curve-based review algorithms (like FSRS) to recommend articles for review, which is not reasonable.</p>
+                        <p style="margin: 0.5em 0;line-height: 1.6;">For a long article, it is difficult to <strong>use only memory level</strong> as the standard for whether it should <strong>be recommended for review next time</strong>. The real <strong>criteria should be multi-dimensional</strong>, such as difficulty, learning progress, importance, urgency, interest, etc.</p>
+                        <p style="margin: 0.5em 0;line-height:1.6;"><strong>In short, the core purpose of incremental reading is not to "fight forgetting", but to achieve a stress-free "read later" experience, and ultimately to efficiently learn a large amount of material simultaneously.</strong></p>
+                        <p style="margin: 0.5em 0;line-height:1.6;"><strong>This plugin focuses solely on solving the recommendation problem for "read later", which is the priority problem. As for subsequent excerpting and card-making operations, this plugin does not cover them.</strong></p>
+                    </div>
+                </details>
+            </li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        🎯 <strong>Embrace Document Priority</strong> — Detailed, Controllable, Visualizable Priority System
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <p style="margin: 0.4em 0;">Maintain all document priorities, supporting both roulette random selection (higher priority → higher probability) and absolute priority ordering, compatible with light and heavy roaming habits.</p>
+                        <h4 style="margin: 0.8em 0 0.3em; color: #0f172a;">Custom Metric Weights</h4>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li>Define metrics like difficulty, importance, urgency, interest, etc., with fully customizable weight percentages.</li>
+                            <li>Metric changes will immediately affect document priorities, serving as the foundation for the recommendation engine.</li>
+                        </ul>
+                        <h4 style="margin: 0.8em 0 0.3em; color: #0f172a;">Flexible Filtering</h4>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li>Multi-notebook + root document combined filtering for more precise scope control.</li>
+                            <li>Combine with SQL / tag filtering to build your personalized learning list.</li>
+                        </ul>
+                        <h4 style="margin: 0.8em 0 0.3em; color: #0f172a;">Visualized Priorities</h4>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li>Strip dot chart intuitively displays priority distribution, supports direct drag adjustment of nodes, with metrics changing proportionally.</li>
+                            <li>List supports batch adjustment and drag sorting for quick group adjustments.</li>
+                        </ul>
+                    </div>
+                </details>
+            </li>
             <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #14b8a6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
                 <details>
                     <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
@@ -116,13 +141,36 @@
                     </div>
                 </details>
             </li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">⚖️ <strong>Customizable Metric Weights</strong> - Users can define metrics like difficulty, importance, urgency, and set their weights</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #06b6d4; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📊 <strong>Visualized Priorities</strong> - Strip dot chart clearly shows document priorities, supports direct drag adjustment</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #f59e0b; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📁 <strong>Flexible Filtering</strong> - Multi-select notebooks and root documents for precise learning scope</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #ef4444; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📝 <strong>Real-time Adjustment</strong> - Adjust article metrics in real time during reading, dynamically optimize recommendations</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📈 <strong>Roamed Document Management</strong> - Roamed document list + heatmap, batch adjust priorities, drag to sort</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📋 <strong>Roaming History Tracking</strong> - Record reading history, roaming count, and access time to track progress</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #10b981; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">🔄 <strong>Auto Reset</strong> - Optionally auto-reset visited document records each time SiYuan starts</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #0ea5e9; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        ⚙️ <strong>Priority Evolution Management</strong> — Manual Real-time / Batch Alignment
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <p style="margin: 0.4em 0;">Provides two paths: "real-time adjustment" and "priority alignment", switch freely based on document scale:</p>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li><strong>Few documents → Manual real-time adjustment</strong>: Modify metrics or priorities during reading, immediately feel the recommendation changes.</li>
+                            <li><strong>Many documents → Priority alignment</strong>: One-click alignment of recommended documents according to relevance percentage distribution, preserving extremes, suitable for batch maintenance.</li>
+                        </ul>
+                        <p style="margin: 0.4em 0;">Regardless of which method is used, the goal is to continuously evolve priorities, keeping recommendation quality aligned with current learning strategy.</p>
+                    </div>
+                </details>
+            </li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        📈 <strong>Roaming Data Dashboard</strong> — Clear Overview of All Data
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li>Priority Sort Table: Overview of all documents' priority leaderboard, supports drag sorting</li>
+                            <li>Roamed Document List: Track documents you've already read</li>
+                            <li>Roaming Count Sort Table: View frequently accessed documents leaderboard, supports resetting access counts.</li>
+                        </ul>
+                        <p style="margin: 0.4em 0;">Clearly manage related data, always stay informed about roaming strategy execution.</p>
+                    </div>
+                </details>
+            </li>
         </ul>
     </div>
     <!-- User Guide -->
@@ -135,7 +183,7 @@
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
                 1. Search for "Roaming Mode Incremental Reading" in the SiYuan plugin marketplace<br>
                 2. Click the install button to complete installation<br>
-                3. After installation, the plugin icon will appear in the top bar
+                3. After installation, the plugin icon will appear in the top bar and sidebar
                 </div>
                 </details>
             </li>
@@ -143,88 +191,66 @@
                 <details>
                 <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">⚙️ <strong>Set Parameters</strong> - Custom Metric Weights</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. Right-click the top bar plugin icon to enter settings<br>
-                2. Customize metrics (difficulty, importance, urgency, etc.)<br>
-                3. Set weights for each metric<br>
-                4. Select notebooks or root documents to include<br>
-                5. Set the absolute priority order roaming parameter (0-1)<br>
-                6. Choose whether to auto-reset visited document records on SiYuan startup<br>
-                7. Click save when done
+                1. Right-click the top bar plugin icon to enter settings page<br>
+                2. Set absolute priority order roaming parameter (0-1)<br>
+                3. Choose whether to exclude visited documents, auto-reload roaming, auto-reset visited document records<br>
+                4. Customize the metrics you need and the weight percentage for each metric<br>
+                5. Configure baseline document selection and candidate/output parameters, balance recommendation quality and computation time yourself<br>
+                6. Enable or disable "Auto Priority Alignment" option—enabling allows rapid priority iteration, disabling and using manual alignment is more accurate<br>
+                7. Click save after settings are complete
                 </div>
                 </details>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📁 <strong>Filter Settings</strong> - Precise Targeting</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📁 <strong>Filter Documents</strong> - Select Scope</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. Click the plugin icon to open the incremental reading panel<br>
-                2. Multi-select notebooks for filtering, combine freely<br>
-                3. Select root documents for filtering<br>
+                1. Enter the incremental learning panel from the sidebar<br>
+                2. Support multi-select notebooks for filtering, combine freely<br>
+                3. Support selecting root documents, tags, and other filtering methods<br>
+                4. Support custom SQL for personalized filtering<br>
                 </div>
                 </details>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📊 <strong>Adjust Metrics</strong> - Dynamic Optimization</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📊 <strong>Reading and Adjustment</strong> - Core Steps</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. Adjust article metrics during reading as needed<br>
-                2. Use plus/minus buttons to change metric values<br>
-                3. Adjustments instantly affect priority calculation<br>
-                4. You can always view roamed documents and all document priorities
+                1. During reading, adjust article metrics and priorities based on actual situation<br>
+                2. If the document is not what you want to read, lower it<br>
+                3. If it's what you want to read, or it's important and you want it recommended more, raise it<br>
+                4. Study, understand, excerpt, and make cards from the document content<br>
+                5. If you can't finish or get tired, immediately click "Continue Roaming" to move to the next article. Don't force yourself—stress-free "read later" is the essence of incremental reading<br>
+                6. Repeat the above process for new articles
                 </div>
                 </details>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎯 <strong>Start Reading</strong> - Priority-based Recommendation</summary>
-                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. If you don't want to read the current article, just "Continue Roaming"<br>
-                2. If you want to read, you can read and simply edit, or click "Open Document" to open in a new tab for detailed editing, excerpting, card making, etc.
-                </div>
-                </details>
-            </li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
-                <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🔄 <strong>Continue Roaming</strong> - Intelligent Switching</summary>
-                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. When you feel tired, encounter difficulties, or want a change<br>
-                2. Click "Continue Roaming"<br>
-                3. The system will intelligently recommend the next article<br>
-                4. Enjoy a stress-free "read later" experience
-                </div>
-                </details>
-            </li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
-                <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📋 <strong>View History</strong> - Track Progress</summary>
-                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. View roaming history in the roamed document list<br>
-                2. See read articles, roaming count, and last access time
-                </div>
-                </details>
-            </li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
-                <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📊 <strong>Visual Priority Management</strong> - Strip Dot Chart</summary>
-                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. Clearly view all document priorities in the strip dot chart<br>
-                2. Drag dots to adjust priorities, related metrics change proportionally<br>
-                3. Right-click a dot to open the document in a new tab<br>
-                4. Batch adjust priorities in the list<br>
-                5. Drag to sort in the list, priority becomes the average of adjacent documents
-                </div>
-                </details>
-            </li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
-                <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎲 <strong>Hybrid Recommendation Mechanism</strong> - Smart Balance</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎲 <strong>Hybrid Recommendation Mechanism</strong> - Trade-off Between Precision and Efficiency</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
                 1. Set the absolute priority order roaming probability (0-1)<br>
-                2. Set to 1: strictly roam in priority order<br>
-                3. Set to 0: fully use roulette wheel by priority as weight<br>
-                4. Set to decimal: sometimes roam by order, otherwise roulette wheel<br>
-                5. In the settings panel, you can batch reset priorities randomly for documents within a specified range<br>
-                6. Enable intelligent recommendation to surface multi-anchor TF-IDF suggestions alongside hybrid roaming for richer choices
+                ----1.1. Set to 1: strictly roam documents in absolute priority order<br>
+                ----1.2. Set to 0: fully use roulette wheel based on priority as weight probability<br>
+                ----1.3. Set to decimal: probability of roaming in absolute priority order, otherwise roulette wheel<br>
+                2. Intelligent recommendation, based on your recent preference documents (high priority or high visit count), recommends other documents similar to them<br>
+                ----2.1. Configure parameters: select how many documents with highest priority and how many with most visits as baseline documents? Aim to reflect your preferences<br>
+                ----2.2. Configure parameters: select how many documents to display, how many to participate as candidates, how many paragraphs to sample. Generally, larger values mean more accurate recommendations, but also increased computation and time<br>
+                ----2.3. Priority alignment: adjust the priority value distribution of intelligently recommended documents to match the relevance percentage distribution, keeping extremes unchanged. The adjustment method roughly normalizes relevance values, then denormalizes them to priority values. If your SiYuan has extremely many documents, this feature can greatly speed up priority management for numerous documents.<br>
+                ----2.4. Optional setting to enable auto priority alignment, suitable for situations requiring quick and efficient general priority distribution differentiation
+                </div>
+                </details>
+            </li>
+            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
+                <details>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📋 <strong>Data Management and Visualization</strong> - Clear View of Reading-Related Data</summary>
+                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
+                1. Understand roaming count and last access time through the panel<br>
+                2. Clearly view all document priority distribution through the strip dot chart<br>
+                3. Directly drag to adjust document priorities in the chart, related metrics will change proportionally<br>
+                4. Right-click a point in the chart to open that document in a new tab<br>
+                5. View and understand related data through other tabs in the panel, such as priority sort table, roamed document list, roaming count sort table, etc.<br>
+                6. Support drag sorting in document priority list, priority automatically becomes the average of the two adjacent documents
                 </div>
                 </details>
             </li>
@@ -254,6 +280,18 @@
     <!-- Recent Updates -->
 <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Recent Updates</h2>
+
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.2.0 Update (2025.11.25)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🌟 Highlights</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li>Added the priority alignment workflow that scales recommended document priorities to match similarity percentage distribution while keeping tier extremes unchanged.</li>
+<li>Added an "Auto Priority Alignment" toggle in settings for one-click background alignment, ideal for large libraries.</li>
+<li>Refined the metrics/recommendation UI panels for denser information and cleaner navigation.</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
 
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v4.1.1 Update (2025.11.23)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">

@@ -439,13 +439,6 @@
         <div class="tab-item {activeTab === idx ? 'active' : ''}" on:click={() => activeTab = idx}>{tab}</div>
       {/each}
     </div>
-    <button class="lock-btn" on:click={toggleLock} title={$isLocked ? pluginInstance.i18n.unlockEditArea : pluginInstance.i18n.lockEditArea}>
-      {#if $isLocked}
-        🔒
-      {:else}
-        🔓
-      {/if}
-    </button>
   </div>
   <div class="config__tab-container">
     {#if activeTab === 0}
@@ -476,19 +469,6 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <h4 class="setting-title">自动重置访问记录</h4>
-              <label>
-                <input
-                  type="checkbox"
-                  bind:checked={autoResetOnStartup}
-                  disabled={$isLocked}
-                />
-                开启后，每次启动自动清空已访问文档记录
-              </label>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
               <h4 class="setting-title">排除已访问文档</h4>
               <label>
                 <input
@@ -513,6 +493,19 @@
                 开启后，当没有可用文档时自动清除访问记录并重新开始
               </label>
               <p class="help-text">仅在开启"排除已访问文档"时生效</p>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <h4 class="setting-title">自动重置访问记录</h4>
+              <label>
+                <input
+                  type="checkbox"
+                  bind:checked={autoResetOnStartup}
+                  disabled={$isLocked}
+                />
+                开启后，每次启动自动清空已访问文档记录
+              </label>
             </div>
           </div>
           {/if}
@@ -750,7 +743,7 @@
           <h4>基准文档选择</h4>
           <div class="form-row align-center">
             <div class="form-group">
-              <label>最近漫游 N 篇</label>
+              <label>最近漫游的前 N 篇</label>
               <input
                 type="number"
                 min="1"
@@ -762,7 +755,7 @@
               <p class="help-text">按 custom-roaming-last 排序，取最新 N 篇</p>
             </div>
             <div class="form-group">
-              <label>漫游次数最多 M 篇</label>
+              <label>漫游次数最多的前 M 篇</label>
               <input
                 type="number"
                 min="1"
@@ -780,39 +773,40 @@
           <h4>候选与输出</h4>
           <div class="form-row align-center">
             <div class="form-group">
-              <label>推荐条数</label>
+              <label>推荐（对齐）条数</label>
               <input
                 type="number"
                 min="3"
-                max="50"
+                max="100"
                 bind:value={recommendTopK}
                 disabled={$isLocked}
                 readonly={$isLocked}
               />
+              <p class="help-text">将被显示，并参与优先级对齐</p>
             </div>
             <div class="form-group">
               <label>候选集上限</label>
               <input
                 type="number"
                 min="20"
-                max="500"
+                max="10000"
                 bind:value={recommendMaxCandidates}
                 disabled={$isLocked}
                 readonly={$isLocked}
               />
-              <p class="help-text">限制参与相似度计算的最大文档数，避免计算过重</p>
+              <p class="help-text">参与相似度计算的最大文档数</p>
             </div>
             <div class="form-group">
               <label>采样段落上限</label>
               <input
                 type="number"
                 min="3"
-                max="20"
+                max="50"
                 bind:value={recommendMaxParagraphs}
                 disabled={$isLocked}
                 readonly={$isLocked}
               />
-              <p class="help-text">标题 + 头段 + 中段 + 尾段合计不超过该值</p>
+              <p class="help-text">文档段落采样数量合计不超过该值</p>
             </div>
           </div>
         </div>

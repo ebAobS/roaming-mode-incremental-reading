@@ -69,24 +69,49 @@
             </li>
         </ul>
     </div>
-    <!-- 核心理念 -->
-    <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #fef7ff, #fdf2f8); border: 1px solid #f9a8d4; border-radius: 8px; box-shadow: 0 4px 12px rgba(236,72,153,0.15);">
-        <h2 style="color: #be185d; margin: 0 0 1em; text-align: center; font-size: 1.3em;">💡 核心理念</h2>
-        <div style="background: white; padding: 1.5em; border-radius: 8px; border-left: 4px solid #ec4899;">
-            <p style="margin: 0.5em 0; line-height: 1.6;"><strong>渐进阅读应该与闪卡区分开来：</strong></p>
-            <ul style="margin: 0.5em 0; padding-left: 1.2em;">
-                <li style="margin: 0.3em 0;"><strong>闪卡</strong>复习算法原理是<strong>遗忘曲线</strong>，这方面思源闪卡系统+FSRS算法已经足够完善。多年使用Anki、SuperMemo的经验告诉我们，卡片的“最小信息原则”极其重要。</li>
-                <li style="margin: 0.3em 0;"><strong>渐进阅读</strong>面对的是大段文本，先天不符合“最小信息原则”。目前大多数渐进阅读解决方案惯性地使用遗忘曲线为原理的复习算法（如FSRS）来推荐复习文章，这并不合理。</li>
-            </ul>
-            <p style="margin: 0.5em 0; line-height: 1.6;">对于一篇洋洋洒洒的文章，很难<strong>单纯的使用记忆程度</strong>作为下次是否<strong>被推荐复习的标准</strong>。真正的<strong>标准应该是多元</strong>的，比如难度、学习进度、学习内容的重要程度、紧急程度、感兴趣程度等。</p>
-            <p style="margin: 0.5em 0; line-height: 1.6;"><strong>总之，渐进阅读的核心目的并不是“对抗遗忘”，而是实现无压力的“稍后阅读”，最终高效地同时学习大量材料。</strong></p>
-        </div>
-    </div>
     <!-- 核心功能 -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1px solid #bae6fd; border-radius: 8px; box-shadow: 0 4px 12px rgba(14,165,233,0.15);">
         <h2 style="color: #0ea5e9; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 核心功能</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">🎯 <strong>拥抱文档优先级</strong> - 可自行维护所有文档的优先级，作为漫游文档的推荐依据，可基于轮盘赌算法（优先级越高，推荐概率越大）或绝对优先级顺序（优先级数值高的必先被推荐）进行漫游</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #ec4899; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        💡 <strong>渐进阅读核心：稍后阅读</strong> — 并非对抗遗忘
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <p style="margin: 0.4em 0;">闪卡复习算法原理是遗忘曲线，这方面思源闪卡系统+FSRS算法已经足够完善。多年使用Anki、SuperMemo的经验表明，卡片的“最小信息原则”极其重要。</p>
+                        <p style="margin: 0.4em 0;"><strong>渐进阅读</strong>面对的是大段文本，先天不符合“最小信息原则”。目前大多数渐进阅读解决方案惯性地使用遗忘曲线为原理的复习算法（如FSRS）来推荐复习文章，这并不合理。</p>
+                        <p style="margin: 0.5em 0;line-height: 1.6;">对于一篇洋洋洒洒的文章，很难<strong>单纯的使用记忆程度</strong>作为下次是否<strong>被推荐复习的标准</strong>。真正的<strong>标准应该是多元</strong>的，比如难度、学习进度、学习内容的重要程度、紧急程度、感兴趣程度等。</p>
+                        <p style="margin: 0.5em 0;line-height:1.6;"><strong>总之，渐进阅读的核心目的并不是"对抗遗忘"，而是实现无压力的"稍后阅读"，最终高效地同时学习大量材料。</strong></p>
+                        <p style="margin: 0.5em 0;line-height:1.6;"><strong>本插件仅专注于解决稍后阅读的推荐问题，也就是优先级问题，至于后续的摘录制卡操作，本插件不涉及。</strong></p>
+                    </div>
+                </details>
+            </li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        🎯 <strong>拥抱文档优先级</strong>详细可控可视化的优先级系统
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <p style="margin: 0.4em 0;">维护所有文档优先级，既可轮盘赌随机抽取（权重越高概率越大），也可绝对优先级顺序，兼容轻度与重度漫游习惯。</p>
+                        <h4 style="margin: 0.8em 0 0.3em; color: #0f172a;">自定义指标权重</h4>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li>按需定义难度、重要性、紧急度、兴趣等指标，权重百分比完全自控。</li>
+                            <li>指标变化将即时影响文档优先级，是推荐引擎的基础数据。</li>
+                        </ul>
+                        <h4 style="margin: 0.8em 0 0.3em; color: #0f172a;">灵活筛选</h4>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li>多笔记本 + 根文档联动筛选，范围控制更精细。</li>
+                            <li>配合 SQL / 标签过滤，构建专属学习清单。</li>
+                        </ul>
+                        <h4 style="margin: 0.8em 0 0.3em; color: #0f172a;">可视化优先级</h4>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li>条带状点图直观展示优先级分布，可直接拖动节点，指标会按比例联动。</li>
+                            <li>列表支持批量调节与拖动排序，快速做出整组调整。</li>
+                        </ul>
+                    </div>
+                </details>
+            </li>
             <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #14b8a6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
                 <details>
                     <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
@@ -116,13 +141,36 @@
                     </div>
                 </details>
             </li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">⚖️ <strong>自定义指标权重</strong> - 用户可自定义文章难度、重要性、紧急程度等指标及权重</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #06b6d4; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📊 <strong>可视化优先级</strong> - 条带状点图清晰展示文档优先级，支持直接拖动调整</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #f59e0b; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📁 <strong>灵活筛选</strong> - 支持多选笔记本和根文档筛选，精准定位学习范围</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #ef4444; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📝 <strong>实时调整</strong> - 阅读过程中可实时调整文章指标，动态优化推荐算法</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📈 <strong>已漫游文档管理</strong> - 已漫游文档列表+热力图，支持批量调节优先级和拖动排序</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #6366f1; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">📋 <strong>漫游历史追踪</strong> - 记录阅读历史、漫游次数和访问时间，追踪学习进度</li>
-            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #10b981; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">🔄 <strong>自动重置</strong> - 支持每次开启思源时自动重置已访问文档记录</li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #0ea5e9; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        ⚙️ <strong>优先级进化管理</strong> — 手动实时 / 批量对齐
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <p style="margin: 0.4em 0;">提供“实时调整”和“优先级对齐”两套路径，按文档规模自由切换：</p>
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li><strong>文档少 → 手动实时调整</strong>：阅读过程中即可修改各项指标或优先级，立刻体感推荐变化。</li>
+                            <li><strong>文档多 → 优先级对齐</strong>：一键按照相关性百分比分布对齐被推荐文档，保留极值，适合批量维护。</li>
+                        </ul>
+                        <p style="margin: 0.4em 0;">无论采用哪种方式，目标都是持续演化优先级，保持推荐质量始终符合当前学习策略。</p>
+                    </div>
+                </details>
+            </li>
+            <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #8b5cf6; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
+                <details>
+                    <summary style="color: #0f172a; cursor: pointer; font-weight: 600; font-size: 1.05em;">
+                        📈 <strong>漫游数据看板</strong> — 清楚掌握各种数据
+                    </summary>
+                    <div style="margin-top: 0.8em;">
+                        <ul style="margin: 0; padding-left: 1.2em; list-style: disc;">
+                            <li>优先级排序表：总览所有文档的优先级天梯榜，可拖动排序</li>
+                            <li>已漫游文档列表：掌握已经看过的文档</li>
+                            <li>漫游次数排序表：查看频繁访问的文档天梯榜，可清零访问次数。</li>
+                        </ul>
+                        <p style="margin: 0.4em 0;">清晰管理相关数据，随时掌握漫游策略执行情况。</p>
+                    </div>
+                </details>
+            </li>
         </ul>
     </div>
     <!-- 使用指南 -->
@@ -135,7 +183,7 @@
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
                 1. 在思源笔记插件市场中搜索"漫游式渐进阅读"<br>
                 2. 点击安装按钮完成插件安装<br>
-                3. 安装完成后，顶栏会出现插件图标
+                3. 安装完成后，顶栏和侧栏会出现插件图标
                 </div>
                 </details>
             </li>
@@ -144,87 +192,65 @@
                 <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">⚙️ <strong>设置参数</strong> - 自定义指标权重</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
                 1. 右键点击顶栏插件图标进入设置页面<br>
-                2. 自定义您需要的指标（如难度、重要性、紧急程度等）<br>
-                3. 设置各指标的权重百分比<br>
-                4. 选择要包含的笔记本或根文档<br>
-                5. 设置绝对优先级顺序漫游参数（0-1之间）<br>
-                6. 选择是否每次开启思源时自动重置已访问文档记录<br>
+                2. 设置绝对优先级顺序漫游参数（0-1之间）<br>
+                3. 选择是否排除已访问文档，自动重载漫游，自动重置已访问文档记录<br>
+                4. 自定义您需要的指标以及各指标的权重百分比<br>
+                5. 配置基准文档的选择以及候选与输出参数，自行平衡推荐质量与计算时间
+                6. 开启或关闭“自动优先级对齐”选项，开启则快速迭代优先级，关闭而采用手动对齐则更准确<br>
                 7. 设置完成后点击保存
                 </div>
                 </details>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📁 <strong>筛选设置</strong> - 精准定位</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📁 <strong>筛选文档</strong> - 选定范围</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. 点击插件图标进入渐进学习面板
+                1. 侧栏进入渐进学习面板<br>
                 2. 支持多选笔记本进行筛选，可自由组合<br>
-                3. 支持选择根文档进行筛选<br>
+                3. 支持选择根文档、标签等方式进行筛选<br>
+                4. 支持自定义SQL的方式进行个性化定制筛选<br>
                 </div>
                 </details>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📊 <strong>调整指标</strong> - 动态优化</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📊 <strong>阅读与调整</strong> - 核心步骤</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. 在阅读过程中，根据实际情况调整文章指标<br>
-                2. 使用加减按钮调整各项指标值<br>
-                3. 指标调整会实时影响文章的优先级计算<br>
-                4. 您可以随时查看已漫游文档和所有文档优先级列表
+                1. 在阅读过程中，根据实际情况调整文章指标、优先级<br>
+                2. 如果文档并不是你想看的，则调低<br>
+                3. 如果是你想看的，或者很重要，希望多被推荐，则调高<br>
+                4. 进行文档内容的学习、理解、摘录、制卡<br>
+                5. 看不完或者看累了，立即点击继续漫游进入下一篇文章，不要硬着头皮，无压力的稍后阅读，正是渐进阅读的精髓<br>
+                6.对于新文章重复上述过程
                 </div>
                 </details>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎯 <strong>开始阅读</strong> - 根据优先级推荐</summary>
-                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. 如果不想阅读该文章则直接“继续漫游”<br>
-                2. 想阅读的话，可以直接阅读并简单编辑，点击"打开该文档"按钮可在新标签页打开文档，可以详细编辑，并进行摘录、制卡等操作
-                </div>
-                </details>
-            </li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
-                <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🔄 <strong>继续漫游</strong> - 智能切换</summary>
-                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. 当您对当前文章感到疲惫、遇到困难或想换换口味时<br>
-                2. 点击"继续漫游"按钮<br>
-                3. 系统会智能推荐下一篇文章<br>
-                4. 实现无压力的"稍后阅读"体验
-                </div>
-                </details>
-            </li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
-                <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📋 <strong>查看历史</strong> - 追踪进度</summary>
-                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. 通过面板的已漫游文档列表查看漫游历史<br>
-                2. 通过面板了解已阅读的文章、漫游次数和上次访问时间
-                </div>
-                </details>
-            </li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
-                <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📊 <strong>可视化优先级管理</strong> - 条带状点图</summary>
-                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. 通过条带状点图清晰查看所有文档的优先级分布<br>
-                2. 点图中直接拖动调整文档优先级，相关指标会自动等比例变化<br>
-                3. 右击点图中某点可在新标签页打开该文档<br>
-                3. 文档优先级列表中可批量调节优先级<br>
-                4. 文档优先级列表中支持拖动排序，优先级会自动变为前后两个文档的平均数
-                </div>
-                </details>
-            </li>
-            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
-                <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎲 <strong>混合推荐机制</strong> - 智能平衡</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎲 <strong>混合推荐机制</strong> - 精确与高效之间的权衡</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
                 1. 设置绝对优先级顺序漫游概率（0-1之间）<br>
-                2. 设置为1：绝对按照优先级顺序先后漫游文档<br>
-                3. 设置为0：完全按照优先级为权重概率的轮盘赌方式漫游<br>
-                4. 设置为小数：有概率按优先级绝对顺序漫游，否则轮盘赌<br>
-                5. 设置页面第三栏，您可以批量随机重置文档优先级，将指定优先级范围的文档重置为随机的新优先级值<br>
-                6. 打开“智能推荐”，让多锚点 TF-IDF 推荐与混合漫游并行，获取更多候选文档
+                ----1.1. 设置为1：绝对按照优先级顺序先后漫游文档<br>
+                ----1.2. 设置为0：完全按照优先级为权重概率的轮盘赌方式漫游<br>
+                ----1.3. 设置为小数：有概率按优先级绝对顺序漫游，否则轮盘赌<br>
+                2. 智能推荐，基于您最近的偏好文档（优先级高或浏览次数多）内容，推荐与其相似的其他文档<br>
+                ----2.1. 配置参数，选定您认为优先级最高的多少篇，以及浏览次数最多的多少篇作为基准文档合适？力求能反映您的偏好<br>
+                ----2.2. 配置参数，选定多少显示多少文档，多少文档参与候选，多少段落参与采样。通常数值越大，推荐越准确，但同时计算量增加，耗时增加<br>
+                ----2.3. 优先级对齐，将智能推荐的文档的优先级数值分布调整为与相关性百分比值的分布一致，并保持极值不变，调整方法大致为将相关性值归一化，再反归一化为优先级的值。如果您的思源的文档数量极多，这个功能可大大加快文档您对众多文档的优先级管理。<br>
+                ----2.4. 可选设置开启自动优先级对齐，适合需要快速高效笼统的将优先级分布分化的情况
+                </div>
+                </details>
+            </li>
+            <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
+                <details>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📋 <strong>数据管理与可视化</strong> - 清晰查看阅读的相关数据</summary>
+                <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
+                1. 通过面板了解漫游次数和上次访问时间<br>
+                2. 通过条带状点图清晰查看所有文档的优先级分布<br>
+                3. 点图中直接拖动调整文档优先级，相关指标会自动等比例变化<br>
+                4. 右击点图中某点可在新标签页打开该文档<br>
+                5. 通过面板的其他tab，如优先级排序表，已漫游文档列表，漫游次数排序表等，查看和了解相关数据<br>
+                6. 文档优先级列表中支持拖动排序，优先级会自动变为前后两个文档的平均数
                 </div>
                 </details>
             </li>
@@ -254,6 +280,18 @@
     <!-- 近期更新 -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 近期更新</h2>
+
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.2.0版本更新 (2025.11.25)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🌟 新功能</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li>新增优先级对齐功能，让推荐文档优先级分布自动匹配相关性百分比，并保持极值不变。</li>
+<li>新增“自动优先级对齐”设置项，适合大规模文档的批量优先级维护。</li>
+<li>优化指标与推荐 UI 面板，操作信息密度更高、阅读更顺畅。</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
 
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v4.1.1版本更新 (2025.11.23)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">

@@ -2,7 +2,7 @@
   "name": "roaming-mode-incremental-reading",
   "author": "ebAobS",
   "url": "https://github.com/ebAobS/roaming-mode-incremental-reading",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "minAppVersion": "2.9.0",
   "backends": [
     "windows",

@@ -1479,6 +1479,9 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       <div class="section recommendation-section">
         <div class="toolbar-row recommendation-toolbar">
           <h4 class="recommendation-heading">智能推荐</h4>
+          {#if autoAlignRecommendationPriority}
+            <span class="recommend-auto-tip">已开启自动优先级对齐</span>
+          {/if}
           {#if !autoAlignRecommendationPriority}
             <div class="align-actions">
               <button
@@ -2343,6 +2346,11 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  .recommend-auto-tip {
+    font-size: 12px;
+    color: var(--b3-theme-on-surface-light);
   }
 
   .recommendation-heading {
