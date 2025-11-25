@@ -65,13 +65,13 @@
                 <strong>Discussion</strong>: <a href="https://ld246.com/article/1746802777105" style="color: #d97706;">Roaming Mode Incremental Reading | The Only Usable Incremental Reading Recommendation Solution</a>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
-                <strong>Contact</strong>: WeChat ebAobS, welcome to join the user group
+                <strong>Join the QQ group: 1022747685</strong> — hop in and say hi 😏
             </li>
         </ul>
     </div>
     <!-- Core Features -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1px solid #bae6fd; border-radius: 8px; box-shadow: 0 4px 12px rgba(14,165,233,0.15);">
-        <h2 style="color: #0ea5e9; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Core Features</h2>
+        <h2 style="color: #0ea5e9; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Core Features (Click the item to expand for details)</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
             <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #ec4899; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
                 <details>
@@ -175,7 +175,7 @@
     </div>
     <!-- User Guide -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #fefbff, #f3e8ff); border: 1px solid #c4b5fd; border-radius: 8px; box-shadow: 0 4px 12px rgba(139,92,246,0.15);">
-        <h2 style="color: #7c3aed; margin: 0 0 1em; text-align: center; font-size: 1.3em;">📖 User Guide</h2>
+        <h2 style="color: #7c3aed; margin: 0 0 1em; text-align: center; font-size: 1.3em;">📖 User Guide (Click the item to expand for details)</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
@@ -189,15 +189,18 @@
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">⚙️ <strong>Set Parameters</strong> - Custom Metric Weights</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">⚙️ <strong>Initialization Settings</strong> - Configure metric weights and core parameters</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. Right-click the top bar plugin icon to enter settings page<br>
-                2. Set absolute priority order roaming parameter (0-1)<br>
-                3. Choose whether to exclude visited documents, auto-reload roaming, auto-reset visited document records<br>
-                4. Customize the metrics you need and the weight percentage for each metric<br>
-                5. Configure baseline document selection and candidate/output parameters, balance recommendation quality and computation time yourself<br>
-                6. Enable or disable "Auto Priority Alignment" option—enabling allows rapid priority iteration, disabling and using manual alignment is more accurate<br>
-                7. Click save after settings are complete
+                1. Right-click the top-bar plugin icon to open the settings page<br>
+                2. Configure the absolute-priority roaming probability (0–1)<br>
+                ----2.1. Set to 1: roam strictly in absolute priority order<br>
+                ----2.2. Set to 0: fully rely on roulette probability with priority as the weight<br>
+                ----2.3. Set to any decimal between 0 and 1: sometimes follow absolute order, otherwise roulette<br>
+                3. Choose whether to exclude visited docs, auto-reload roaming, and auto-reset visited records<br>
+                4. Define the metrics you need and each weight percentage. <strong>Click Save and wait for initialization; the very first run can take a while.</strong><br>
+                5. Configure baseline document selection plus candidate/output parameters to balance accuracy and compute time<br>
+                6. Decide whether to turn on “Auto Priority Alignment”: enable for rapid iteration, disable for finer manual control<br>
+                7. Click Save after everything is set
                 </div>
                 </details>
             </li>
@@ -227,17 +230,17 @@
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎲 <strong>Hybrid Recommendation Mechanism</strong> - Trade-off Between Precision and Efficiency</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎲 <strong>Intelligent Recommendation & Priority Alignment</strong> - Stress-free, efficient priority evolution</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. Set the absolute priority order roaming probability (0-1)<br>
-                ----1.1. Set to 1: strictly roam documents in absolute priority order<br>
-                ----1.2. Set to 0: fully use roulette wheel based on priority as weight probability<br>
-                ----1.3. Set to decimal: probability of roaming in absolute priority order, otherwise roulette wheel<br>
-                2. Intelligent recommendation, based on your recent preference documents (high priority or high visit count), recommends other documents similar to them<br>
-                ----2.1. Configure parameters: select how many documents with highest priority and how many with most visits as baseline documents? Aim to reflect your preferences<br>
-                ----2.2. Configure parameters: select how many documents to display, how many to participate as candidates, how many paragraphs to sample. Generally, larger values mean more accurate recommendations, but also increased computation and time<br>
-                ----2.3. Priority alignment: adjust the priority value distribution of intelligently recommended documents to match the relevance percentage distribution, keeping extremes unchanged. The adjustment method roughly normalizes relevance values, then denormalizes them to priority values. If your SiYuan has extremely many documents, this feature can greatly speed up priority management for numerous documents.<br>
-                ----2.4. Optional setting to enable auto priority alignment, suitable for situations requiring quick and efficient general priority distribution differentiation
+                <strong>1. Intelligent recommendation</strong>: Uses your recent preference anchors (high-priority or frequently roamed documents) to surface similar documents<br>
+                ----1.1. Decide how many top-priority docs and how many high-roaming-count docs become baseline anchors so the system reflects your taste<br>
+                ----1.2. Choose how many documents to display, how many join the candidate pool, and how many paragraphs to sample. Larger numbers raise accuracy but add computation time<br>
+                ----1.3. Tune the parameters until you strike the accuracy vs. performance balance that feels right<br>
+                <strong>2. Priority alignment</strong>: Re-shapes recommended document priorities to match their relevance-percentage distribution while keeping the extreme values untouched<br>
+                ----2.1. In practice it normalizes the similarity scores, then maps them back (denormalizes) into the priority range<br>
+                ----2.2. For massive libraries, this dramatically accelerates large-scale priority maintenance<br>
+                ----2.3. Every alignment pass is a feedback loop that evolves your priority distribution—think self-regressing management that saves time and effort<br>
+                ----2.4. You can enable auto priority alignment when you need a fast, coarse-grained priority reshuffle
                 </div>
                 </details>
             </li>
@@ -280,6 +283,18 @@
     <!-- Recent Updates -->
 <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 Recent Updates</h2>
+
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.2.1 Update (2025.11.25)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🌟 Highlights</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li>Pixel-level polish for sidebar cards, filter rows, and roaming dashboards delivers tighter spacing, crisper typography, and calmer feedback colors.</li>
+<li>First-class HarmonyOS + iOS packaging: mobile builds now ship with dedicated entry points and instructions, so the same plugin archive covers every platform.</li>
+<li>README / README_zh_CN gain a Quick Start TL;DR and platform matrix to make onboarding and troubleshooting instantly scannable.</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
 
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v4.2.0 Update (2025.11.25)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">

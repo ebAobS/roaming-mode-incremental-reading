@@ -65,13 +65,13 @@
                 <strong>讨论帖</strong>：<a href="https://ld246.com/article/1746802777105" style="color: #d97706;">漫游式渐进阅读 | 唯一能用的渐进阅读推荐解决方案</a>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
-                <strong>联系方式</strong>：微信 ebAobS，欢迎加入交流群
+                <strong>加入QQ交流群：1022747685</strong>  快到碗里来😏
             </li>
         </ul>
     </div>
     <!-- 核心功能 -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1px solid #bae6fd; border-radius: 8px; box-shadow: 0 4px 12px rgba(14,165,233,0.15);">
-        <h2 style="color: #0ea5e9; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 核心功能</h2>
+        <h2 style="color: #0ea5e9; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 核心功能（点击条目可详细展开）</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
             <li style="margin: 0.5em 0; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #ec4899; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05);">
                 <details>
@@ -175,7 +175,7 @@
     </div>
     <!-- 使用指南 -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #fefbff, #f3e8ff); border: 1px solid #c4b5fd; border-radius: 8px; box-shadow: 0 4px 12px rgba(139,92,246,0.15);">
-        <h2 style="color: #7c3aed; margin: 0 0 1em; text-align: center; font-size: 1.3em;">📖 使用指南</h2>
+        <h2 style="color: #7c3aed; margin: 0 0 1em; text-align: center; font-size: 1.3em;">📖 使用指南（点击条目可详细展开）</h2>
         <ul style="margin: 0; padding-left: 1.2em;">
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
@@ -189,12 +189,15 @@
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">⚙️ <strong>设置参数</strong> - 自定义指标权重</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">⚙️ <strong>初始化设置</strong> - 初始化指标权重等参数</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
                 1. 右键点击顶栏插件图标进入设置页面<br>
-                2. 设置绝对优先级顺序漫游参数（0-1之间）<br>
+                2. 设置绝对优先级顺序漫游概率（0-1之间）<br>
+                ----2.1. 设置为1：绝对按照优先级顺序先后漫游文档<br>
+                ----2.2. 设置为0：完全按照优先级为权重概率的轮盘赌方式漫游<br>
+                ----2.3. 设置为小数：有概率按优先级绝对顺序漫游，否则轮盘赌<br>
                 3. 选择是否排除已访问文档，自动重载漫游，自动重置已访问文档记录<br>
-                4. 自定义您需要的指标以及各指标的权重百分比<br>
+                4. 自定义您需要的指标以及各指标的权重百分比，<strong>点击保存，耐心等待初始化完毕，第一次可能时间较长</strong><br>
                 5. 配置基准文档的选择以及候选与输出参数，自行平衡推荐质量与计算时间
                 6. 开启或关闭“自动优先级对齐”选项，开启则快速迭代优先级，关闭而采用手动对齐则更准确<br>
                 7. 设置完成后点击保存
@@ -216,27 +219,27 @@
                 <details>
                 <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">📊 <strong>阅读与调整</strong> - 核心步骤</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. 在阅读过程中，根据实际情况调整文章指标、优先级<br>
+                1. 在阅读过程中，<strong>根据实际情况调整文章指标、优先级</strong><br>
                 2. 如果文档并不是你想看的，则调低<br>
                 3. 如果是你想看的，或者很重要，希望多被推荐，则调高<br>
                 4. 进行文档内容的学习、理解、摘录、制卡<br>
-                5. 看不完或者看累了，立即点击继续漫游进入下一篇文章，不要硬着头皮，无压力的稍后阅读，正是渐进阅读的精髓<br>
+                5. 看不完或者看累了，立即点击继续漫游进入下一篇文章，<strong>不要硬着头皮读，无压力的稍后阅读，正是渐进阅读的精髓</strong><br>
                 6.对于新文章重复上述过程
                 </div>
                 </details>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #0369a1; box-shadow: 0 2px 4px rgba(124,58,237,0.08);">
                 <details>
-                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎲 <strong>混合推荐机制</strong> - 精确与高效之间的权衡</summary>
+                <summary style="color: #0369a1; cursor: pointer; font-weight: 500; font-size: 1.05em;">🎲 <strong>智能推荐&优先级对齐</strong> - 无压力、不耗时、高效的进化迭代文档优先级</summary>
                 <div style="margin-top: 0.8em; padding-top: 0.8em; border-top: 1px solid #f3e8ff;">
-                1. 设置绝对优先级顺序漫游概率（0-1之间）<br>
-                ----1.1. 设置为1：绝对按照优先级顺序先后漫游文档<br>
-                ----1.2. 设置为0：完全按照优先级为权重概率的轮盘赌方式漫游<br>
-                ----1.3. 设置为小数：有概率按优先级绝对顺序漫游，否则轮盘赌<br>
-                2. 智能推荐，基于您最近的偏好文档（优先级高或浏览次数多）内容，推荐与其相似的其他文档<br>
-                ----2.1. 配置参数，选定您认为优先级最高的多少篇，以及浏览次数最多的多少篇作为基准文档合适？力求能反映您的偏好<br>
-                ----2.2. 配置参数，选定多少显示多少文档，多少文档参与候选，多少段落参与采样。通常数值越大，推荐越准确，但同时计算量增加，耗时增加<br>
-                ----2.3. 优先级对齐，将智能推荐的文档的优先级数值分布调整为与相关性百分比值的分布一致，并保持极值不变，调整方法大致为将相关性值归一化，再反归一化为优先级的值。如果您的思源的文档数量极多，这个功能可大大加快您对众多文档的优先级管理。<br>
+                <strong>1. 智能推荐，基于您最近的偏好文档（优先级高或浏览次数多）内容，推荐与其相似的其他文档</strong><br>
+                ----1.1. 选定您认为优先级最高的多少篇，以及浏览次数最多的多少篇作为基准文档合适？力求能反映您的偏好<br>
+                ----1.2. 选定多少显示多少文档，多少文档参与候选，多少段落参与采样。<strong>通常数值越大，推荐越准确，但同时计算量增加，耗时增加</strong><br>
+                ----1.3. 自行调整参数，将推荐的准确度与加载性能之间做一个平衡<br>
+                <strong>2. 优先级对齐，将智能推荐的文档的优先级数值分布调整为与相关性百分比值的分布一致，并保持极值不变</strong><br>
+                ----2.1. 调整方法大致为将相关性值<strong>归一化，再反归一化</strong>为优先级的值。<br>
+                ----2.2. 如果您的思源的文档<strong>数量极多</strong>，这个功能可大大<strong>加快</strong>您对众多文档的<strong>优先级管理</strong>。<br>
+                ----2.3. <strong>每次对齐，都是对您文档优先级分布的一次反馈，也是一次进化，不断进化不断迭代，形成“自回归”式的优先级管理，同时您也节省了时间和精力</strong>
                 ----2.4. 可选设置开启自动优先级对齐，适合需要快速高效笼统的将优先级分布分化的情况
                 </div>
                 </details>
@@ -280,6 +283,18 @@
     <!-- 近期更新 -->
     <div style="margin-top: 1.5em; padding: 1.5em; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; box-shadow: 0 4px 12px rgba(34,197,94,0.15);">
         <h2 style="color: #16a34a; margin: 0 0 1em; text-align: center; font-size: 1.3em;">🚀 近期更新</h2>
+
+<strong style="color: #6366f1; font-size: 1.1em;">📅 v4.2.1版本更新 (2025.11.25)</strong>
+<ul style="margin: 0.5em 0; padding-left: 1.2em;">
+<li style="margin: 0.3em 0;"><strong style="color: #10b981;">🌟 新亮点</strong>
+<ul style="margin: 0.2em 0; padding-left: 1em;">
+<li>针对侧边栏卡片、筛选区与漫游仪表盘的UI进行微调，间距/配色统一，视觉反馈更柔和。</li>
+<li>支持 HarmonyOS 与 iOS 。</li>
+<li>README / README_zh_CN 优化，查找信息更快、结构更清晰。</li>
+</ul>
+</li>
+</ul>
+<hr style="margin: 1.5em 0; border: none; border-top: 1px solid #e0e7ff;">
 
 <strong style="color: #6366f1; font-size: 1.1em;">📅 v4.2.0版本更新 (2025.11.25)</strong>
 <ul style="margin: 0.5em 0; padding-left: 1.2em;">

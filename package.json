@@ -1,6 +1,6 @@
 {
   "name": "roaming-mode-incremental-reading",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "type": "module",
   "description": "Roaming mode incremental reading for SiYuan Note",
   "repository": "ebAobS/roaming-mode-incremental-reading",
