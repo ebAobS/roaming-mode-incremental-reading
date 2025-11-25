@@ -1254,7 +1254,6 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   <div class="sidebar-header">
     <div class="title-group">
       <div class="title">{pluginInstance.i18n.sidebarTitle || "漫游面板"}</div>
-      <div class="subtitle">漫游式渐进阅读</div>
     </div>
     <div class="header-actions">
       <button class="icon-btn" on:click={() => showSettingMenu(pluginInstance)} title={pluginInstance.i18n.setting}>
@@ -1563,7 +1562,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       <div class="section">
         <div class="section-title">优先级排序表</div>
         <div class="toolbar-row">
-          <button class="secondary-button" on:click={loadPriorityList} disabled={priorityLoading}>
+          <button class="secondary-button align-style-button align-btn" on:click={loadPriorityList} disabled={priorityLoading}>
             {priorityLoading ? "加载中..." : "刷新列表"}
           </button>
         </div>
@@ -1594,7 +1593,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
                   <span class="priority-id">{doc.id.slice(0, 6)}...</span>
                 </div>
                 <div class="priority-controls">
-                  <button class="priority-btn" on:click={() => decreasePriorityInList(doc.id)}>-</button>
+                  <button class="priority-btn align-style-button align-btn compact" on:click={() => decreasePriorityInList(doc.id)}>-</button>
                   <input
                     type="number"
                     step="0.01"
@@ -1603,7 +1602,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
                     value={doc.priority}
                     on:change={(e) => handlePriorityInputInList(doc.id, readNumberInput(e))}
                   />
-                  <button class="priority-btn" on:click={() => increasePriorityInList(doc.id)}>+</button>
+                  <button class="priority-btn align-style-button align-btn compact" on:click={() => increasePriorityInList(doc.id)}>+</button>
                   <span class="visited-flag">{doc.visited ? "✓" : "·"}</span>
                 </div>
               </li>
@@ -1615,8 +1614,8 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       <div class="section">
         <div class="section-title">已漫游文档</div>
         <div class="toolbar-row">
-          <button class="secondary-button" on:click={loadVisitedDocs} disabled={visitedLoading}>刷新</button>
-          <button class="secondary-button danger" on:click={resetVisitedAndRefresh}>重置记录</button>
+          <button class="secondary-button align-style-button align-btn" on:click={loadVisitedDocs} disabled={visitedLoading}>刷新</button>
+          <button class="secondary-button danger align-style-button" on:click={resetVisitedAndRefresh}>重置记录</button>
         </div>
         {#if visitedLoading}
           <div class="placeholder">加载中...</div>
@@ -1643,7 +1642,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       <div class="section">
         <div class="section-title">漫游次数排序表</div>
         <div class="toolbar-row">
-          <button class="secondary-button" on:click={loadRoamingCountList} disabled={roamingCountLoading}>
+          <button class="secondary-button align-style-button align-btn" on:click={loadRoamingCountList} disabled={roamingCountLoading}>
             {roamingCountLoading ? "加载中..." : "刷新列表"}
           </button>
         </div>
@@ -1668,7 +1667,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
                   </div>
                   <div class="roaming-actions">
                     <span class="roaming-count">漫游 {doc.roamingCount} 次</span>
-                    <button class="secondary-button danger" on:click={() => resetRoamingCountForDoc(doc.id)}>清0</button>
+                    <button class="secondary-button danger align-style-button compact" on:click={() => resetRoamingCountForDoc(doc.id)}>清0</button>
                   </div>
                 </div>
               </li>
@@ -2361,7 +2360,8 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     flex: 1 1 auto;
   }
 
-  .recommend-action-button {
+  .recommend-action-button,
+  .align-style-button {
     flex: 0 0 auto;
     display: flex;
     justify-content: center;
@@ -2377,9 +2377,34 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     border-radius: 8px;
   }
 
-  .recommend-action-button.align-btn {
+  .recommend-action-button.align-btn,
+  .align-style-button.align-btn {
     background: var(--b3-theme-primary-lightest, var(--b3-theme-surface));
     border-color: var(--b3-theme-primary);
+  }
+
+  .recommend-action-button.danger,
+  .align-style-button.danger {
+    border-color: color-mix(in srgb, var(--b3-theme-error) 80%, transparent);
+    color: var(--b3-theme-error);
+    background: color-mix(in srgb, var(--b3-theme-error) 15%, var(--b3-theme-surface));
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--b3-theme-error) 20%, transparent);
+  }
+
+  .recommend-action-button.danger:hover:not(:disabled),
+  .align-style-button.danger:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background: var(--b3-theme-error);
+    border-color: var(--b3-theme-error);
+    color: var(--b3-theme-on-error, #fff);
+    box-shadow: 0 10px 18px color-mix(in srgb, var(--b3-theme-error) 28%, transparent);
+  }
+
+  .recommend-action-button.compact,
+  .align-style-button.compact {
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: 13px;
   }
 
   .recommend-action-button.help-btn {
@@ -2395,14 +2420,16 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     border-color: var(--b3-theme-primary-light, var(--b3-theme-primary));
   }
 
-  .recommend-action-button:hover:not(:disabled) {
+  .recommend-action-button:hover:not(:disabled):not(.danger),
+  .align-style-button:hover:not(:disabled):not(.danger) {
     transform: translateY(-1px);
     box-shadow: 0 10px 18px color-mix(in srgb, var(--b3-theme-primary) 28%, transparent);
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary, #fff);
   }
 
-  .recommend-action-button:disabled {
+  .recommend-action-button:disabled,
+  .align-style-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     box-shadow: none;
@@ -2411,7 +2438,8 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     background: var(--b3-theme-surface);
   }
 
-  .recommend-action-button:focus-visible {
+  .recommend-action-button:focus-visible,
+  .align-style-button:focus-visible {
     outline: 2px solid var(--b3-theme-primary);
     outline-offset: 2px;
   }
@@ -2478,13 +2506,13 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     padding: 4px 6px;
   }
 
-  .priority-btn {
-    width: 26px;
-    height: 26px;
-    border: 1px solid var(--b3-theme-border);
-    background: var(--b3-theme-surface);
-    border-radius: 4px;
-    cursor: pointer;
+  .priority-btn.align-style-button {
+    width: 36px;
+    min-width: 36px;
+    height: 32px;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 600;
   }
 
   .visited-title {
