@@ -743,7 +743,8 @@ class IncrementalReviewer {
   /**
    * 4.3 修复所有文档的指标并重新计算优先级
    * 将空值或0值设为默认值5，删除多余指标，计算并更新所有文档的优先级
-   * 
+   * 优化版本：使用分页处理和批量操作大幅提升性能，避免资源耗尽
+   *
    * @param progressCallback 可选的进度回调函数
    * @returns 修复结果统计信息，包括更新的优先级数量
    */
@@ -760,162 +761,260 @@ class IncrementalReviewer {
       // 4.3.1 使用空过滤条件，处理所有文档
       const filterCondition = this.buildEmptyFilterCondition()
       this.pluginInstance.logger.info("修复指标: 使用空过滤条件，将处理所有文档")
-      
+
       // 4.3.2 初始化统计变量
       let totalUpdatedDocs = 0
       let updatedMetricsMap = new Map()
       let totalDeletedMetrics = 0
       let totalUpdatedPriorities = 0
-      
+
       // 4.3.3 初始化指标统计计数器
       this.incrementalConfig.metrics.forEach(metric => {
         updatedMetricsMap.set(metric.id, { id: metric.id, name: metric.name, count: 0 })
       })
-      
+
       // 4.3.4 获取符合条件的文档总数
       const countSql = `
-        SELECT COUNT(id) AS total FROM blocks 
-        WHERE type = 'd' 
+        SELECT COUNT(id) AS total FROM blocks
+        WHERE type = 'd'
         ${filterCondition}
       `
-      
+
       const countResult = await this.pluginInstance.kernelApi.sql(countSql)
       if (countResult.code !== 0) {
         throw new Error(countResult.msg)
       }
-      
+
       const totalDocCount = countResult.data?.[0]?.total || 0
       this.pluginInstance.logger.info(`符合条件的文档总数: ${totalDocCount}`)
-      
+
       if (totalDocCount === 0) {
         return { totalDocs: 0, updatedDocs: 0, updatedMetrics: [], deletedMetricsCount: 0, updatedPriorities: 0 }
       }
-      
-      // 4.3.5 使用分页查询处理所有文档
-      const pageSize = 5000 // 每页处理5000个文档
-      let processedCount = 0
-      let allDocs = []
-      
-      // 4.3.6 显示处理范围提示
+
+      // 4.3.5 显示处理范围提示
       showMessage(`将处理所有文档的指标 (共${totalDocCount}篇)`, 3000, "info")
-      
-      // 4.3.7 获取所有文档ID
+
+      // 4.3.6 使用分页处理避免内存耗尽
+      const pageSize = 1000 // 每页处理1000个文档，避免内存耗尽
+      let processedCount = 0
+
+      // 4.3.7 分页处理所有文档
       for (let offset = 0; offset < totalDocCount; offset += pageSize) {
-        // 4.3.7.1 使用分页查询获取文档
+        const currentPage = Math.floor(offset / pageSize) + 1
+        const totalPages = Math.ceil(totalDocCount / pageSize)
+
+        this.pluginInstance.logger.info(`处理第 ${currentPage}/${totalPages} 页文档，偏移量: ${offset}`)
+        showMessage(`正在处理第 ${currentPage}/${totalPages} 页文档...`, 1000, "info")
+
+        // 4.3.7.1 获取当前页的文档
         const pageSql = `
-          SELECT id FROM blocks 
-          WHERE type = 'd' 
+          SELECT id FROM blocks
+          WHERE type = 'd'
           ${filterCondition}
           LIMIT ${pageSize} OFFSET ${offset}
         `
-        
+
         const pageResult = await this.pluginInstance.kernelApi.sql(pageSql)
         if (pageResult.code !== 0) {
           throw new Error(pageResult.msg)
         }
-        
+
         const pageDocs = pageResult.data as any[] || []
-        allDocs = allDocs.concat(pageDocs)
-        this.pluginInstance.logger.info(`获取分页 ${Math.floor(offset/pageSize) + 1}/${Math.ceil(totalDocCount/pageSize)}，共 ${pageDocs.length} 篇文档`)
-      }
-      
-      this.pluginInstance.logger.info(`总共获取 ${allDocs.length} 篇文档，将检查指标完整性`)
-      
-      // 4.3.8 顺序处理每篇文档的指标
-      for (let i = 0; i < allDocs.length; i++) {
-        const doc = allDocs[i]
-        
-        // 4.3.8.1 更新进度
-        if (progressCallback) {
-          progressCallback(i + 1, allDocs.length)
+        this.pluginInstance.logger.info(`获取到第 ${currentPage} 页，共 ${pageDocs.length} 篇文档`)
+
+        if (pageDocs.length === 0) {
+          this.pluginInstance.logger.warn(`第 ${currentPage} 页没有文档，跳过`)
+          continue
         }
-        
-        // 4.3.8.2 定期更新进度提示
-        if (i % 500 === 0 || i === allDocs.length - 1) {
-          showMessage(`正在处理文档指标和优先级: ${i+1}/${allDocs.length}`, 1000, "info")
-        }
-        
-        // 4.3.8.3 获取文档当前的所有属性 - 这里暂时保持单个查询，因为需要单独处理每个文档的更新逻辑
-        const attrs = await this.pluginInstance.kernelApi.getBlockAttrs(doc.id)
-        const data = attrs.data || attrs
-        
-        // 4.3.8.4 统计需要更新的指标
-        const metricsToUpdate: { [key: string]: string } = {}
-        let docUpdated = false
-        
-        // 4.3.8.5 检查每个当前配置中的指标
-        for (const metric of this.incrementalConfig.metrics) {
-          const attrKey = `custom-metric-${metric.id}`
-          const rawValue = data[attrKey]
-          
-          // 4.3.8.6 检查指标是否为空或0
-          if (!rawValue || rawValue === '' || parseFloat(rawValue) === 0) {
-            const defaultValue = 5.0
-            metricsToUpdate[attrKey] = defaultValue.toFixed(4)
-            
-            // 4.3.8.7 更新统计信息
-            if (updatedMetricsMap.has(metric.id)) {
-              updatedMetricsMap.get(metric.id).count++
-              docUpdated = true
+
+        // 4.3.7.2 批量获取当前页文档的属性
+        const docIds = pageDocs.map(doc => doc.id)
+        const batchAttrsResults = await this.pluginInstance.kernelApi.batchGetBlockAttrs(docIds)
+
+        // 4.3.7.3 批量处理当前页文档指标和优先级
+        const batchSize = 50 // 每批处理50个文档，避免资源耗尽
+        const batchUpdates: Array<{blockId: string, attrs: any}> = []
+        const priorityUpdates: Array<{docId: string, priority: number}> = []
+
+        for (let i = 0; i < pageDocs.length; i++) {
+          const doc = pageDocs[i]
+          const globalIndex = offset + i
+
+          // 4.3.7.4 更新进度
+          if (progressCallback) {
+            progressCallback(globalIndex + 1, totalDocCount)
+          }
+
+          // 4.3.7.5 定期更新进度提示
+          if (globalIndex % 500 === 0 || globalIndex === totalDocCount - 1) {
+            showMessage(`正在处理文档指标和优先级: ${globalIndex+1}/${totalDocCount}`, 1000, "info")
+          }
+
+          // 4.3.7.6 从批量结果中获取文档属性
+          const attrsResult = batchAttrsResults[i]
+          const data = attrsResult && attrsResult.code === 0 ? (attrsResult.data || attrsResult) : {}
+
+          // 4.3.7.7 统计需要更新的指标
+          const metricsToUpdate: { [key: string]: string } = {}
+          let docUpdated = false
+
+          // 4.3.7.8 检查每个当前配置中的指标
+          for (const metric of this.incrementalConfig.metrics) {
+            const attrKey = `custom-metric-${metric.id}`
+            const rawValue = data[attrKey]
+
+            // 4.3.7.9 检查指标是否为空或0
+            if (!rawValue || rawValue === '' || parseFloat(rawValue) === 0) {
+              const defaultValue = 5.0
+              metricsToUpdate[attrKey] = defaultValue.toFixed(4)
+
+              // 4.3.7.10 更新统计信息
+              if (updatedMetricsMap.has(metric.id)) {
+                updatedMetricsMap.get(metric.id).count++
+                docUpdated = true
+              }
+            }
+          }
+
+          // 4.3.7.11 找出不属于当前配置的多余指标
+          const currentMetricKeys = this.incrementalConfig.metrics.map(m => `custom-metric-${m.id}`)
+          const allMetricKeys = Object.keys(data).filter(key => key.startsWith('custom-metric-'))
+          const invalidMetrics = allMetricKeys.filter(key => !currentMetricKeys.includes(key))
+
+          // 4.3.7.12 删除无效指标
+          for (const key of invalidMetrics) {
+            metricsToUpdate[key] = '' // 将值设为空字符串相当于删除
+            totalDeletedMetrics++
+            docUpdated = true
+          }
+
+          // 4.3.7.13 如果有需要更新的指标，加入批量更新列表
+          if (Object.keys(metricsToUpdate).length > 0) {
+            batchUpdates.push({
+              blockId: doc.id,
+              attrs: metricsToUpdate
+            })
+
+            // 4.3.7.14 记录更新信息（减少日志频率）
+            if (globalIndex % 100 === 0) {
+              this.pluginInstance.logger.info(
+                `准备更新文档 ${doc.id} 的指标 [${globalIndex+1}/${totalDocCount}]: ` +
+                `新增/修复 ${Object.keys(metricsToUpdate).filter(k => metricsToUpdate[k] !== '').length}个, ` +
+                `删除 ${invalidMetrics.length}个`
+              )
+            }
+          }
+
+          // 4.3.7.15 计算文档优先级
+          try {
+            // 构建文档优先级数据（使用内存中的数据，避免重复查询）
+            const docData: DocPriorityData = {
+              docId: doc.id,
+              metrics: {}
+            }
+
+            for (const metric of this.incrementalConfig.metrics) {
+              const attrKey = `custom-metric-${metric.id}`
+              const rawValue = data[attrKey]
+              let metricValue: number
+
+              if (!rawValue || rawValue === '' || parseFloat(rawValue) === 0) {
+                metricValue = 5.0
+              } else {
+                metricValue = parseFloat(rawValue)
+              }
+
+              docData.metrics[metric.id] = metricValue
+            }
+
+            // 计算优先级
+            const priorityResult = await this.calculatePriority(docData)
+            priorityUpdates.push({
+              docId: doc.id,
+              priority: priorityResult.priority
+            })
+
+            // 4.3.7.16 记录优先级信息（减少日志频率）
+            if (globalIndex % 100 === 0) {
+              this.pluginInstance.logger.info(
+                `计算文档 ${doc.id} 的优先级为 ${priorityResult.priority.toFixed(4)} [${globalIndex+1}/${totalDocCount}]`
+              )
+            }
+
+          } catch (priorityError) {
+            this.pluginInstance.logger.error(`计算文档 ${doc.id} 的优先级失败 [${globalIndex+1}/${totalDocCount}]`, priorityError)
+          }
+
+          // 4.3.7.17 如果文档有更新，计数加1
+          if (docUpdated) {
+            totalUpdatedDocs++
+          }
+
+          // 4.3.7.18 批量执行更新操作
+          if (batchUpdates.length >= batchSize || i === pageDocs.length - 1) {
+            if (batchUpdates.length > 0) {
+              try {
+                await this.pluginInstance.kernelApi.batchSetBlockAttrs(batchUpdates)
+                this.pluginInstance.logger.info(`批量更新了 ${batchUpdates.length} 个文档的指标`)
+                batchUpdates.length = 0 // 清空列表
+              } catch (updateError) {
+                this.pluginInstance.logger.error(`批量更新文档指标失败，回退到单个更新`, updateError)
+
+                // 批量更新失败时，回退到单个更新
+                for (const item of batchUpdates) {
+                  try {
+                    await this.pluginInstance.kernelApi.setBlockAttrs(item.blockId, item.attrs)
+                  } catch (singleUpdateError) {
+                    this.pluginInstance.logger.error(`更新文档 ${item.blockId} 的指标失败`, singleUpdateError)
+                  }
+                }
+                batchUpdates.length = 0
+              }
+            }
+
+            if (priorityUpdates.length > 0) {
+              try {
+                const priorityBatch = priorityUpdates.map(item => ({
+                  blockId: item.docId,
+                  attrs: {
+                    "custom-priority": item.priority.toFixed(4)
+                  }
+                }))
+                await this.pluginInstance.kernelApi.batchSetBlockAttrs(priorityBatch)
+                totalUpdatedPriorities += priorityUpdates.length
+                this.pluginInstance.logger.info(`批量更新了 ${priorityUpdates.length} 个文档的优先级`)
+                priorityUpdates.length = 0 // 清空列表
+              } catch (priorityUpdateError) {
+                this.pluginInstance.logger.error(`批量更新文档优先级失败，回退到单个更新`, priorityUpdateError)
+
+                // 批量更新失败时，回退到单个更新
+                for (const item of priorityUpdates) {
+                  try {
+                    await this.updateDocPriority(item.docId, item.priority)
+                    totalUpdatedPriorities++
+                  } catch (singlePriorityError) {
+                    this.pluginInstance.logger.error(`更新文档 ${item.docId} 的优先级失败`, singlePriorityError)
+                  }
+                }
+                priorityUpdates.length = 0
+              }
             }
           }
         }
-        
-        // 4.3.8.8 找出不属于当前配置的多余指标
-        const currentMetricKeys = this.incrementalConfig.metrics.map(m => `custom-metric-${m.id}`)
-        const allMetricKeys = Object.keys(data).filter(key => key.startsWith('custom-metric-'))
-        const invalidMetrics = allMetricKeys.filter(key => !currentMetricKeys.includes(key))
-        
-        // 4.3.8.9 删除无效指标
-        for (const key of invalidMetrics) {
-          metricsToUpdate[key] = '' // 将值设为空字符串相当于删除
-          totalDeletedMetrics++
-          docUpdated = true
-        }
-        
-        // 4.3.8.10 如果有需要更新的指标，执行更新
-        if (Object.keys(metricsToUpdate).length > 0) {
-          try {
-            await this.pluginInstance.kernelApi.setBlockAttrs(doc.id, metricsToUpdate)
-            this.pluginInstance.logger.info(
-              `已更新文档 ${doc.id} 的指标 [${i+1}/${allDocs.length}]: ` + 
-              `新增/修复 ${Object.keys(metricsToUpdate).filter(k => metricsToUpdate[k] !== '').length}个, ` +
-              `删除 ${invalidMetrics.length}个`
-            )
-          } catch (updateError) {
-            this.pluginInstance.logger.error(`更新文档 ${doc.id} 的指标失败 [${i+1}/${allDocs.length}]`, updateError)
-          }
-        }
-        
-        // 4.3.8.11 计算并更新文档优先级
-        try {
-          // 获取更新后的文档优先级数据
-          const docPriorityData = await this.getDocPriorityData(doc.id)
-          // 计算优先级
-          const priorityResult = await this.calculatePriority(docPriorityData)
-          // 更新文档的priority属性
-          await this.updateDocPriority(doc.id, priorityResult.priority)
-          totalUpdatedPriorities++
-          
-          this.pluginInstance.logger.info(
-            `已更新文档 ${doc.id} 的优先级为 ${priorityResult.priority.toFixed(4)} [${i+1}/${allDocs.length}]`
-          )
-        } catch (priorityError) {
-          this.pluginInstance.logger.error(`更新文档 ${doc.id} 的优先级失败 [${i+1}/${allDocs.length}]`, priorityError)
-        }
-        
-        // 4.3.8.12 如果文档有更新，计数加1
-        if (docUpdated) {
-          totalUpdatedDocs++
+
+        // 4.3.7.19 添加页间延迟，避免资源耗尽
+        if (currentPage < totalPages) {
+          await new Promise(resolve => setTimeout(resolve, 100))
         }
       }
-      
-      // 4.3.9 完成后显示结果
-      showMessage(`指标和优先级处理完成! 处理了 ${allDocs.length} 篇文档，更新了 ${totalUpdatedDocs} 篇，重新计算了 ${totalUpdatedPriorities} 个优先级`, 5000, "info")
-      
-      // 4.3.10 返回统计结果
+
+      // 4.3.8 完成后显示结果
+      showMessage(`指标和优先级处理完成! 处理了 ${totalDocCount} 篇文档，更新了 ${totalUpdatedDocs} 篇，重新计算了 ${totalUpdatedPriorities} 个优先级`, 5000, "info")
+
+      // 4.3.9 返回统计结果
       return {
-        totalDocs: allDocs.length,
+        totalDocs: totalDocCount,
         updatedDocs: totalUpdatedDocs,
         updatedMetrics: Array.from(updatedMetricsMap.values()).filter(m => m.count > 0),
         deletedMetricsCount: totalDeletedMetrics,
@@ -989,17 +1088,32 @@ class IncrementalReviewer {
 
 
   public async batchGetDocumentPriorities(docIds: string[]): Promise<{ docId: string, priority: number }[]> {
-    const batchSize = 5000 // 每批查询5000个文档
+    if (!docIds || docIds.length === 0) {
+      return []
+    }
+
+    // 大幅减小批处理大小，避免资源耗尽
+    const batchSize = 100 // 每批查询100个文档，避免内存和网络资源耗尽
     const allResults: { docId: string, priority: number | null }[] = []
     const missingDocIds: string[] = []
     let hasMissingPriority = false
 
-    this.pluginInstance.logger.info(`开始批量查询 ${docIds.length} 个文档的优先级属性`)
+    this.pluginInstance.logger.info(`开始批量查询 ${docIds.length} 个文档的优先级属性，批处理大小: ${batchSize}`)
 
-    // 分批查询文档的priority属性
+    // 分批查询文档的priority属性，添加延迟避免资源耗尽
     for (let i = 0; i < docIds.length; i += batchSize) {
       const batchIds = docIds.slice(i, i + batchSize)
-      this.pluginInstance.logger.info(`查询第 ${Math.floor(i / batchSize) + 1}/${Math.ceil(docIds.length / batchSize)} 批文档，共 ${batchIds.length} 个`)
+
+      // 显示进度
+      if (i % (batchSize * 10) === 0 || i === 0) {
+        this.pluginInstance.logger.info(`查询第 ${Math.floor(i / batchSize) + 1}/${Math.ceil(docIds.length / batchSize)} 批文档，共 ${batchIds.length} 个`)
+        showMessage(`正在查询文档优先级 ${Math.min(i + batchSize, docIds.length)}/${docIds.length}`, 1000, "info")
+      }
+
+      // 添加延迟，避免连续请求导致资源耗尽
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 50))
+      }
 
       try {
         // 使用批量API查询一批文档的属性
@@ -1017,7 +1131,10 @@ class IncrementalReviewer {
                 // 发现缺失的优先级
                 hasMissingPriority = true
                 missingDocIds.push(docId)
-                this.pluginInstance.logger.warn(`文档 ${docId} 的priority属性缺失或无效: ${priorityValue}`)
+                // 减少日志频率
+                if (missingDocIds.length <= 5) {
+                  this.pluginInstance.logger.warn(`文档 ${docId} 的priority属性缺失或无效: ${priorityValue}`)
+                }
                 return { docId, priority: null }
               }
 
@@ -1038,61 +1155,119 @@ class IncrementalReviewer {
 
         allResults.push(...batchResults)
 
-        // 更新进度提示
-        if (docIds.length > 5000 && i % (batchSize * 2) === 0) {
-          showMessage(`正在查询文档优先级 ${allResults.length}/${docIds.length}`, 1000, "info")
-        }
       } catch (err) {
         this.pluginInstance.logger.error(`批量查询第 ${Math.floor(i / batchSize) + 1} 批文档属性失败，回退到单个查询`, err)
 
-        // 批量查询失败时，回退到单个查询
-        const fallbackResults = await Promise.all(
-          batchIds.map(async (docId) => {
-            try {
-              const attrs = await this.pluginInstance.kernelApi.getBlockAttrs(docId)
-              const data = attrs.data || attrs
-              const priorityValue = data["custom-priority"]
+        // 批量查询失败时，回退到单个查询，但添加延迟避免资源耗尽
+        for (const docId of batchIds) {
+          try {
+            const attrs = await this.pluginInstance.kernelApi.getBlockAttrs(docId)
+            const data = attrs.data || attrs
+            const priorityValue = data["custom-priority"]
 
-              if (!priorityValue || priorityValue === "" || isNaN(parseFloat(priorityValue))) {
-                hasMissingPriority = true
-                missingDocIds.push(docId)
-                this.pluginInstance.logger.warn(`文档 ${docId} 的priority属性缺失或无效: ${priorityValue}`)
-                return { docId, priority: null }
-              }
-
-              return { docId, priority: parseFloat(priorityValue) }
-            } catch (err) {
-              this.pluginInstance.logger.error(`查询文档 ${docId} 的priority属性失败`, err)
+            if (!priorityValue || priorityValue === "" || isNaN(parseFloat(priorityValue))) {
               hasMissingPriority = true
               missingDocIds.push(docId)
-              return { docId, priority: null }
+              // 减少日志频率
+              if (missingDocIds.length <= 5) {
+                this.pluginInstance.logger.warn(`文档 ${docId} 的priority属性缺失或无效: ${priorityValue}`)
+              }
+              allResults.push({ docId, priority: null })
+            } else {
+              allResults.push({ docId, priority: parseFloat(priorityValue) })
             }
-          })
-        )
+          } catch (singleErr) {
+            this.pluginInstance.logger.error(`查询文档 ${docId} 的priority属性失败`, singleErr)
+            hasMissingPriority = true
+            missingDocIds.push(docId)
+            allResults.push({ docId, priority: null })
+          }
 
-        allResults.push(...fallbackResults)
+          // 单个查询之间添加延迟
+          await new Promise(resolve => setTimeout(resolve, 10))
+        }
       }
     }
 
     // 仅修复缺失优先级的文档，避免全库遍历
     if (hasMissingPriority && missingDocIds.length > 0) {
-      this.pluginInstance.logger.warn(`发现 ${missingDocIds.length} 篇文档缺失优先级，逐个修复...`)
+      this.pluginInstance.logger.warn(`发现 ${missingDocIds.length} 篇文档缺失优先级，批量修复...`)
       showMessage(`检测到 ${missingDocIds.length} 篇文档优先级缺失，正在修复...`, 3000, "info")
 
-      for (let i = 0; i < allResults.length; i++) {
-        const result = allResults[i]
-        if (result.priority !== null) continue
+      // 批量修复缺失的优先级，使用更小的批处理大小
+      const repairBatchSize = 20
+      for (let i = 0; i < missingDocIds.length; i += repairBatchSize) {
+        const repairBatch = missingDocIds.slice(i, i + repairBatchSize)
+
+        // 添加延迟避免资源耗尽
+        if (i > 0) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
 
         try {
-          const docData = await this.getDocPriorityData(result.docId)
-          const { priority } = await this.calculatePriority(docData)
-          await this.updateDocPriority(result.docId, priority)
-          allResults[i] = { docId: result.docId, priority }
-          this.pluginInstance.logger.info(`已修复文档 ${result.docId} 的优先级: ${priority.toFixed(4)}`)
-        } catch (repairError) {
-          this.pluginInstance.logger.error(`修复文档 ${result.docId} 的优先级失败`, repairError)
-          // 使用默认值，避免后续逻辑被阻塞
-          allResults[i] = { docId: result.docId, priority: 5.0 }
+          // 批量获取文档优先级数据
+          const docPriorityDataList = await this.batchGetDocPriorityData(repairBatch)
+
+          // 批量计算优先级
+          const priorityBatch = []
+          for (const docData of docPriorityDataList) {
+            try {
+              const { priority } = await this.calculatePriority(docData)
+              priorityBatch.push({
+                blockId: docData.docId,
+                attrs: {
+                  "custom-priority": priority.toFixed(4)
+                }
+              })
+            } catch (calcError) {
+              this.pluginInstance.logger.error(`计算文档 ${docData.docId} 的优先级失败`, calcError)
+            }
+          }
+
+          // 批量更新优先级
+          if (priorityBatch.length > 0) {
+            await this.pluginInstance.kernelApi.batchSetBlockAttrs(priorityBatch)
+
+            // 更新结果列表
+            for (const item of priorityBatch) {
+              const priority = parseFloat(item.attrs["custom-priority"])
+              const resultIndex = allResults.findIndex(r => r.docId === item.blockId)
+              if (resultIndex !== -1) {
+                allResults[resultIndex] = { docId: item.blockId, priority }
+              }
+            }
+
+            this.pluginInstance.logger.info(`批量修复了 ${priorityBatch.length} 个文档的优先级`)
+          }
+
+        } catch (batchRepairError) {
+          this.pluginInstance.logger.error(`批量修复优先级失败，回退到单个修复`, batchRepairError)
+
+          // 批量修复失败时，回退到单个修复
+          for (const docId of repairBatch) {
+            try {
+              const docData = await this.getDocPriorityData(docId)
+              const { priority } = await this.calculatePriority(docData)
+              await this.updateDocPriority(docId, priority)
+
+              const resultIndex = allResults.findIndex(r => r.docId === docId)
+              if (resultIndex !== -1) {
+                allResults[resultIndex] = { docId, priority }
+              }
+
+              this.pluginInstance.logger.info(`已修复文档 ${docId} 的优先级: ${priority.toFixed(4)}`)
+            } catch (repairError) {
+              this.pluginInstance.logger.error(`修复文档 ${docId} 的优先级失败`, repairError)
+              // 使用默认值，避免后续逻辑被阻塞
+              const resultIndex = allResults.findIndex(r => r.docId === docId)
+              if (resultIndex !== -1) {
+                allResults[resultIndex] = { docId, priority: 5.0 }
+              }
+            }
+
+            // 单个修复之间添加延迟
+            await new Promise(resolve => setTimeout(resolve, 20))
+          }
         }
       }
     }
@@ -1708,7 +1883,8 @@ class IncrementalReviewer {
   /**
    * 7.3 清空所有文档的指标和优先级数据
    * 完全卸载插件前使用，删除所有相关属性
-   * 
+   * 优化版本：使用分页处理和批量操作避免资源耗尽
+   *
    * @param progressCallback 可选的进度回调函数
    * @returns 清理结果统计信息
    */
@@ -1727,7 +1903,7 @@ class IncrementalReviewer {
       // 7.3.1 使用空过滤条件，处理所有文档
       const filterCondition = this.buildEmptyFilterCondition()
       this.pluginInstance.logger.info("清空数据: 使用空过滤条件，将处理所有文档")
-      
+
       // 7.3.2 初始化统计变量
       let totalClearedDocs = 0
       let totalClearedMetrics = 0
@@ -1735,117 +1911,162 @@ class IncrementalReviewer {
       let totalClearedRoamingCount = 0
       let totalClearedRoamingLast = 0
       let totalClearedVisitCount = 0
-      
+
       // 7.3.3 获取所有文档总数
       const countSql = `
-        SELECT COUNT(id) AS total FROM blocks 
-        WHERE type = 'd' 
+        SELECT COUNT(id) AS total FROM blocks
+        WHERE type = 'd'
         ${filterCondition}
       `
-      
+
       const countResult = await this.pluginInstance.kernelApi.sql(countSql)
       if (countResult.code !== 0) {
         throw new Error(countResult.msg)
       }
-      
+
       const totalDocCount = countResult.data?.[0]?.total || 0
       this.pluginInstance.logger.info(`符合条件的文档总数: ${totalDocCount}`)
-      
+
       if (totalDocCount === 0) {
-        return { 
-          totalDocs: 0, 
-          clearedDocs: 0, 
-          clearedMetricsCount: 0, 
+        return {
+          totalDocs: 0,
+          clearedDocs: 0,
+          clearedMetricsCount: 0,
           clearedPriorityCount: 0,
           clearedRoamingCount: 0,
           clearedRoamingLast: 0,
           clearedVisitCount: 0
         }
       }
-      
-      // 7.3.4 使用分页查询处理所有文档
-      const pageSize = 5000 // 每页处理5000个文档
-      let processedCount = 0
-      let allDocs = []
-      
-      // 7.3.5 显示处理范围提示
+
+      // 7.3.4 显示处理范围提示
       showMessage(`将清空所有文档的指标、优先级、漫游记录和访问记录数据 (共${totalDocCount}篇)`, 3000, "info")
-      
-      // 7.3.6 获取所有文档ID
+
+      // 7.3.5 使用分页处理避免内存耗尽
+      const pageSize = 1000 // 每页处理1000个文档，避免内存耗尽
+      let processedCount = 0
+
+      // 7.3.6 分页处理所有文档
       for (let offset = 0; offset < totalDocCount; offset += pageSize) {
-        // 7.3.6.1 使用分页查询获取文档
+        const currentPage = Math.floor(offset / pageSize) + 1
+        const totalPages = Math.ceil(totalDocCount / pageSize)
+
+        this.pluginInstance.logger.info(`处理第 ${currentPage}/${totalPages} 页文档，偏移量: ${offset}`)
+        showMessage(`正在处理第 ${currentPage}/${totalPages} 页文档...`, 1000, "info")
+
+        // 7.3.6.1 获取当前页的文档
         const pageSql = `
-          SELECT id FROM blocks 
-          WHERE type = 'd' 
+          SELECT id FROM blocks
+          WHERE type = 'd'
           ${filterCondition}
           LIMIT ${pageSize} OFFSET ${offset}
         `
-        
+
         const pageResult = await this.pluginInstance.kernelApi.sql(pageSql)
         if (pageResult.code !== 0) {
           throw new Error(pageResult.msg)
         }
-        
+
         const pageDocs = pageResult.data as any[] || []
-        allDocs = allDocs.concat(pageDocs)
-        this.pluginInstance.logger.info(`获取分页 ${Math.floor(offset/pageSize) + 1}/${Math.ceil(totalDocCount/pageSize)}，共 ${pageDocs.length} 篇文档`)
-      }
-      
-      this.pluginInstance.logger.info(`总共获取 ${allDocs.length} 篇文档，将清空指标、优先级、漫游记录和访问记录数据`)
-      
-      // 7.3.7 顺序处理每篇文档
-      for (let i = 0; i < allDocs.length; i++) {
-        const doc = allDocs[i]
-        processedCount++
-        
-        // 7.3.7.1 调用进度回调
-        if (progressCallback) {
-          progressCallback(processedCount, allDocs.length)
+        this.pluginInstance.logger.info(`获取到第 ${currentPage} 页，共 ${pageDocs.length} 篇文档`)
+
+        if (pageDocs.length === 0) {
+          this.pluginInstance.logger.warn(`第 ${currentPage} 页没有文档，跳过`)
+          continue
         }
-        
-        try {
-          // 7.3.7.2 清空所有指标属性
+
+        // 7.3.6.2 批量处理当前页文档
+        const batchSize = 50 // 每批处理50个文档，避免资源耗尽
+        const batchUpdates: Array<{blockId: string, attrs: any}> = []
+
+        for (let i = 0; i < pageDocs.length; i++) {
+          const doc = pageDocs[i]
+          const globalIndex = offset + i
+
+          // 7.3.6.3 调用进度回调
+          if (progressCallback) {
+            progressCallback(globalIndex + 1, totalDocCount)
+          }
+
+          // 7.3.6.4 清空所有指标属性
           const metricsToClear = {}
           this.incrementalConfig.metrics.forEach(metric => {
             metricsToClear[`custom-metric-${metric.id}`] = ""
           })
-          
-          // 7.3.7.3 清空优先级属性
+
+          // 7.3.6.5 清空优先级属性
           metricsToClear["custom-priority"] = ""
-          
-          // 7.3.7.4 清空漫游和访问记录属性
+
+          // 7.3.6.6 清空漫游和访问记录属性
           metricsToClear["custom-roaming-count"] = ""
           metricsToClear["custom-roaming-last"] = ""
           metricsToClear["custom-visit-count"] = ""
-          
-          // 7.3.7.5 批量更新文档属性
-          await this.pluginInstance.kernelApi.setBlockAttrs(doc.id, metricsToClear)
-          
-          totalClearedDocs++
-          totalClearedMetrics += this.incrementalConfig.metrics.length
-          totalClearedPriority++
-          totalClearedRoamingCount++
-          totalClearedRoamingLast++
-          totalClearedVisitCount++
-          
-          // 7.3.7.5 每处理50个文档显示一次进度
-          if (i % 500 === 0 || i === allDocs.length - 1) {
-            const progress = Math.floor((processedCount / allDocs.length) * 100)
-            showMessage(`正在清空文档数据: ${processedCount}/${allDocs.length} (${progress}%)`, 1000, "info")
+
+          // 7.3.6.7 加入批量更新列表
+          batchUpdates.push({
+            blockId: doc.id,
+            attrs: metricsToClear
+          })
+
+          // 7.3.6.8 批量执行更新操作
+          if (batchUpdates.length >= batchSize || i === pageDocs.length - 1) {
+            if (batchUpdates.length > 0) {
+              try {
+                await this.pluginInstance.kernelApi.batchSetBlockAttrs(batchUpdates)
+
+                // 更新统计信息
+                totalClearedDocs += batchUpdates.length
+                totalClearedMetrics += batchUpdates.length * this.incrementalConfig.metrics.length
+                totalClearedPriority += batchUpdates.length
+                totalClearedRoamingCount += batchUpdates.length
+                totalClearedRoamingLast += batchUpdates.length
+                totalClearedVisitCount += batchUpdates.length
+
+                this.pluginInstance.logger.info(`批量清空了 ${batchUpdates.length} 个文档的数据`)
+                batchUpdates.length = 0 // 清空列表
+              } catch (updateError) {
+                this.pluginInstance.logger.error(`批量清空文档数据失败，回退到单个更新`, updateError)
+
+                // 批量更新失败时，回退到单个更新
+                for (const item of batchUpdates) {
+                  try {
+                    await this.pluginInstance.kernelApi.setBlockAttrs(item.blockId, item.attrs)
+
+                    // 更新统计信息
+                    totalClearedDocs++
+                    totalClearedMetrics += this.incrementalConfig.metrics.length
+                    totalClearedPriority++
+                    totalClearedRoamingCount++
+                    totalClearedRoamingLast++
+                    totalClearedVisitCount++
+                  } catch (singleUpdateError) {
+                    this.pluginInstance.logger.error(`清空文档 ${item.blockId} 的数据失败`, singleUpdateError)
+                  }
+                }
+                batchUpdates.length = 0
+              }
+            }
           }
-          
-        } catch (error) {
-          this.pluginInstance.logger.error(`清空文档 ${doc.id} 的数据失败`, error)
-          // 继续处理下一个文档，不中断整个流程
+
+          // 7.3.6.9 每处理500个文档显示一次进度
+          if (globalIndex % 500 === 0 || globalIndex === totalDocCount - 1) {
+            const progress = Math.floor((globalIndex + 1) / totalDocCount * 100)
+            showMessage(`正在清空文档数据: ${globalIndex + 1}/${totalDocCount} (${progress}%)`, 1000, "info")
+          }
+        }
+
+        // 7.3.6.10 添加页间延迟，避免资源耗尽
+        if (currentPage < totalPages) {
+          await new Promise(resolve => setTimeout(resolve, 100))
         }
       }
-      
-      // 7.3.8 显示完成信息
-      this.pluginInstance.logger.info(`成功清空 ${totalClearedDocs}/${allDocs.length} 篇文档的数据`)
+
+      // 7.3.7 显示完成信息
+      this.pluginInstance.logger.info(`成功清空 ${totalClearedDocs}/${totalDocCount} 篇文档的数据`)
       showMessage(`已清空 ${totalClearedDocs} 篇文档的指标、优先级、漫游记录和访问记录数据`, 5000, "info")
-      
+
       return {
-        totalDocs: allDocs.length,
+        totalDocs: totalDocCount,
         clearedDocs: totalClearedDocs,
         clearedMetricsCount: totalClearedMetrics,
         clearedPriorityCount: totalClearedPriority,
@@ -1853,7 +2074,7 @@ class IncrementalReviewer {
         clearedRoamingLast: totalClearedRoamingLast,
         clearedVisitCount: totalClearedVisitCount
       }
-      
+
     } catch (error) {
       this.pluginInstance.logger.error("清空所有文档数据失败", error)
       showMessage(`清空数据失败: ${error.message}`, 5000, "error")
