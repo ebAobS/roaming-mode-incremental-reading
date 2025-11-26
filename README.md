@@ -50,7 +50,7 @@
                style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border-radius: 6px; text-decoration: none; font-size: 0.9em;">🗓 Changelog</a>
             <a href="https://github.com/ebAobS/roaming-mode-incremental-reading/issues"
                style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border-radius: 6px; text-decoration: none; font-size: 0.9em;">💬 Feedback</a>
-            <a href="https://ld246.com/article/1746802777105"
+            <a href="https://ld246.com/article/1764136919240"
                style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border-radius: 6px; text-decoration: none; font-size: 0.9em;">📖 Discussion</a>
         </div>
     </div>
@@ -62,7 +62,7 @@
                 <strong>Repository</strong>: <a href="https://github.com/ebAobS/roaming-mode-incremental-reading" style="color: #d97706;">GitHub Repository</a>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
-                <strong>Discussion</strong>: <a href="https://ld246.com/article/1746802777105" style="color: #d97706;">Roaming Mode Incremental Reading | The Only Usable Incremental Reading Recommendation Solution</a>
+                <strong>Discussion</strong>: <a href="https://ld246.com/article/1764136919240" style="color: #d97706;">Roaming Mode Incremental Reading | The Only Usable Incremental Reading Recommendation Solution</a>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
                 <strong>Join the QQ group: 1022747685</strong> — hop in and say hi 😏

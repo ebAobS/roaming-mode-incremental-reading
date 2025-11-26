@@ -50,7 +50,7 @@
                style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border-radius: 6px; text-decoration: none; font-size: 0.9em;">🗓 更新日志</a>
             <a href="https://github.com/ebAobS/roaming-mode-incremental-reading/issues"
                style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border-radius: 6px; text-decoration: none; font-size: 0.9em;">💬 问题反馈</a>
-            <a href="https://ld246.com/article/1746802777105"
+            <a href="https://ld246.com/article/1764136919240"
                style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border-radius: 6px; text-decoration: none; font-size: 0.9em;">📖 讨论帖</a>
         </div>
     </div>
@@ -62,7 +62,7 @@
                 <strong>项目地址</strong>：<a href="https://github.com/ebAobS/roaming-mode-incremental-reading" style="color: #d97706;">GitHub Repository</a>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
-                <strong>讨论帖</strong>：<a href="https://ld246.com/article/1746802777105" style="color: #d97706;">漫游式渐进阅读 | 唯一能用的渐进阅读推荐解决方案</a>
+                <strong>讨论帖</strong>：<a href="https://ld246.com/article/1764136919240" style="color: #d97706;">漫游式渐进阅读 | 唯一能用的渐进阅读推荐解决方案</a>
             </li>
             <li style="margin: 0.5em 0; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(245,158,11,0.08);">
                 <strong>加入QQ交流群：1022747685</strong>  快到碗里来😏
