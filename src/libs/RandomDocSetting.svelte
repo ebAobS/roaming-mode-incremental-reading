@@ -411,7 +411,7 @@
   }
 
   onMount(async () => {
-    storeConfig = await pluginInstance.loadData(storeName)
+    storeConfig = await pluginInstance.safeLoad(storeName)
     reviewMode = storeConfig?.reviewMode ?? "incremental"
     excludeVisited = storeConfig?.excludeVisited !== false
     autoResetOnStartup = storeConfig?.autoResetOnStartup ?? false

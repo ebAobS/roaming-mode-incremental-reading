@@ -215,8 +215,11 @@ export default class RandomDocPlugin extends Plugin {
   public async safeLoad(storeName: string) {
     let storeConfig = await this.loadData(storeName)
 
-    if (typeof storeConfig !== "object") {
-      storeConfig = {}
+    // 确保返回的是对象且不是 null
+    if (!storeConfig || typeof storeConfig !== "object" || Array.isArray(storeConfig)) {
+      // 导入配置模型以获取默认值
+      const RandomDocConfig = (await import("./models/RandomDocConfig")).default
+      storeConfig = new RandomDocConfig()
     }
 
     return storeConfig
