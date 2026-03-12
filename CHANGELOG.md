@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.2.3] (2026-03-12)
+
+### Bug Fixes
+* 修复配置初始化时的 "Cannot create property 'reviewMode' on string" 错误
+
 ## [4.2.2] (2025-11-26)
 
 ### Bug Fixes

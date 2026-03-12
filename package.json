@@ -1,6 +1,6 @@
 {
   "name": "roaming-mode-incremental-reading",
-  "version": "4.2.2",
+  "version": "4.2.3",
   "type": "module",
   "description": "Roaming mode incremental reading for SiYuan Note",
   "repository": "ebAobS/roaming-mode-incremental-reading",
@@ -39,7 +39,7 @@
     "stylus": "^0.61.0",
     "svelte": "^4.2.19",
     "typescript": "5.6.2",
-    "vite": "^5.4.11",
+    "vite": "^5.4.21",
     "vite-plugin-dts": "^3.9.1",
     "vite-plugin-node-polyfills": "^0.16.0",
     "vite-plugin-static-copy": "^0.16.0",
