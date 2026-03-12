@@ -2,7 +2,6 @@
   import RandomDocPlugin from "../index"
   import { onMount } from "svelte"
   import RandomDocConfig from "../models/RandomDocConfig"
-  import { storeName } from "../Constants"
   import { showMessage, Dialog } from "siyuan"
   import IncrementalReviewer from "../service/IncrementalReviewer"
   import type { Metric } from "../models/IncrementalConfig"
@@ -83,7 +82,7 @@
       storeConfig.recommendMaxCandidates = Number(recommendMaxCandidates) || 50
       storeConfig.recommendMaxParagraphs = Number(recommendMaxParagraphs) || 8
       storeConfig.autoAlignRecommendationPriority = autoAlignRecommendationPriority
-      await pluginInstance.saveData(storeName, storeConfig)
+      storeConfig = await pluginInstance.saveMainConfig(storeConfig)
       pluginInstance.setDebugLogEnabled(enableDebugLog)
       
       // 保存渐进配置
@@ -411,7 +410,7 @@
   }
 
   onMount(async () => {
-    storeConfig = await pluginInstance.safeLoad(storeName)
+    storeConfig = await pluginInstance.loadMainConfig()
     reviewMode = storeConfig?.reviewMode ?? "incremental"
     excludeVisited = storeConfig?.excludeVisited !== false
     autoResetOnStartup = storeConfig?.autoResetOnStartup ?? false

@@ -8,7 +8,6 @@ import { showSettingMenu } from "./topbar"
 import MobileSidebarDialog from "./libs/MobileSidebarDialog.svelte"
 import PluginSidebar from "./libs/PluginSidebar.svelte"
 import { openMobileFileById, showMessage } from "siyuan"
-import { storeName } from "./Constants"
 import IncrementalReviewer from "./service/IncrementalReviewer"
 
 export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
@@ -205,7 +204,7 @@ export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
       // console.log("[移动端漫游] 开始...")
       
       // 1. 加载配置
-      const storeConfig = await pluginInstance.safeLoad(storeName)
+      const storeConfig = await pluginInstance.loadMainConfig()
       
       // 2. 创建 reviewer 实例
       const reviewer = new IncrementalReviewer(storeConfig, pluginInstance)
@@ -244,7 +243,7 @@ export async function initFloatingButton(pluginInstance: RandomDocPlugin) {
       
       // 6. 保存当前文档ID
       ;(storeConfig as any).currentRndId = docId
-      await pluginInstance.saveData(storeName, storeConfig)
+      await pluginInstance.saveMainConfig(storeConfig)
       
       // 7. 延迟后打开文档（模仿 MobileFloatingActions 的流程）
       // console.log("[移动端漫游] 准备打开文档...")

@@ -94,7 +94,7 @@ class IncrementalReviewer {
     try {
       // 2.1.1 从存储中加载配置
       const configId = this.storeConfig.incrementalConfigId
-      const savedConfig = await this.pluginInstance.safeLoad(configId)
+      const savedConfig = await this.pluginInstance.loadIncrementalConfig(configId)
       
       if (savedConfig && savedConfig.metrics) {
         // 2.1.2 使用已保存的配置
@@ -118,7 +118,7 @@ class IncrementalReviewer {
   public async saveIncrementalConfig(): Promise<void> {
     try {
       const configId = this.storeConfig.incrementalConfigId
-      await this.pluginInstance.saveData(configId, {
+      await this.pluginInstance.saveIncrementalConfig(configId, {
         metrics: this.incrementalConfig.metrics
       })
     } catch (error) {

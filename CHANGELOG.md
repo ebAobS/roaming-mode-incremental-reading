@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.2.4] (2026-03-12)
+
+### Bug Fixes
+* 修复配置加载链路在历史配置缺失字段时导致的 `Cannot read properties of undefined (reading 'replace')` 错误
+* 增强主配置与渐进配置的归一化与存储键校验，避免 `loadData/saveData` 接收非法 `storageName`
+
 ## [4.2.3] (2026-03-12)
 
 ### Bug Fixes

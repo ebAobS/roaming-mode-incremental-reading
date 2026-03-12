@@ -1084,7 +1084,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   }
 
   const doIncrementalRandomDoc = async () => {
-    storeConfig = await pluginInstance.safeLoad(storeName)
+    storeConfig = await pluginInstance.loadMainConfig()
     syncRecommendationConfig()
     if (storeConfig.filterMode === FilterMode.SQL && (!storeConfig.sqlQuery || storeConfig.sqlQuery.trim() === "")) {
       showMessage("请输入SQL查询语句", 3000, "info")
@@ -1190,7 +1190,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   }
 
   onMount(async () => {
-    storeConfig = await pluginInstance.safeLoad(storeName)
+    storeConfig = await pluginInstance.loadMainConfig()
     if (!storeConfig.reviewMode) {
       storeConfig.reviewMode = ReviewMode.Incremental
       await pluginInstance.saveData(storeName, storeConfig)

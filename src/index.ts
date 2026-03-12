@@ -46,6 +46,8 @@ import KernelApi from "./api/kernel-api"
 import IncrementalReviewer from "./service/IncrementalReviewer"
 import { initFloatingButton } from "./floatingButton"
 import PluginSidebar from "./libs/PluginSidebar.svelte"
+import IncrementalConfig, { Metric } from "./models/IncrementalConfig"
+import RandomDocConfig, { FilterMode, ReviewMode } from "./models/RandomDocConfig"
 import { icons } from "./utils/svg"
 
 /**
@@ -160,7 +162,7 @@ export default class RandomDocPlugin extends Plugin {
    * 当插件被思源笔记加载时调用，用于初始化插件功能
    */
   async onload() {
-    const initConfig = await this.safeLoad(storeName)
+    const initConfig = await this.loadMainConfig()
     this.setDebugLogEnabled(initConfig?.enableDebugLog === true)
 
     // 2.1 初始化顶栏按钮
@@ -218,11 +220,239 @@ export default class RandomDocPlugin extends Plugin {
     // 确保返回的是对象且不是 null
     if (!storeConfig || typeof storeConfig !== "object" || Array.isArray(storeConfig)) {
       // 导入配置模型以获取默认值
-      const RandomDocConfig = (await import("./models/RandomDocConfig")).default
       storeConfig = new RandomDocConfig()
     }
 
     return storeConfig
+  }
+
+  private resolveStorageName(storageName?: string, fallbackName?: string) {
+    if (typeof storageName === "string" && storageName.trim().length > 0) {
+      return storageName.trim()
+    }
+    if (typeof fallbackName === "string" && fallbackName.trim().length > 0) {
+      return fallbackName.trim()
+    }
+    throw new Error("Invalid storage name")
+  }
+
+  private isPlainObject(value: unknown): value is Record<string, any> {
+    return !!value && typeof value === "object" && !Array.isArray(value)
+  }
+
+  private clampNumber(value: unknown, fallback: number, min?: number, max?: number) {
+    const parsed = typeof value === "number" ? value : Number(value)
+    if (!Number.isFinite(parsed)) {
+      return fallback
+    }
+
+    let normalized = parsed
+    if (typeof min === "number") {
+      normalized = Math.max(min, normalized)
+    }
+    if (typeof max === "number") {
+      normalized = Math.min(max, normalized)
+    }
+    return normalized
+  }
+
+  private normalizeMetric(metric: unknown, index: number): Metric | null {
+    if (!this.isPlainObject(metric)) {
+      return null
+    }
+
+    const id =
+      typeof metric.id === "string" && metric.id.trim().length > 0
+        ? metric.id.trim()
+        : `metric_${index + 1}`
+    const name =
+      typeof metric.name === "string" && metric.name.trim().length > 0
+        ? metric.name.trim()
+        : id
+
+    return {
+      id,
+      name,
+      value: this.clampNumber(metric.value, 5, 0, 10),
+      weight: this.clampNumber(metric.weight, 10, 0),
+      description: typeof metric.description === "string" ? metric.description : "",
+    }
+  }
+
+  private hasMeaningfulConfigChanges(original: unknown, normalized: unknown) {
+    try {
+      return JSON.stringify(original) !== JSON.stringify(normalized)
+    } catch (_error) {
+      return true
+    }
+  }
+
+  public normalizeMainConfig(rawConfig: unknown) {
+    const defaultConfig = new RandomDocConfig()
+    const normalizedConfig = new RandomDocConfig()
+
+    if (this.isPlainObject(rawConfig)) {
+      Object.assign(normalizedConfig, rawConfig)
+    }
+
+    normalizedConfig.notebookId =
+      typeof normalizedConfig.notebookId === "string" ? normalizedConfig.notebookId : ""
+    normalizedConfig.sqlQuery =
+      typeof normalizedConfig.sqlQuery === "string" ? normalizedConfig.sqlQuery : ""
+    normalizedConfig.reviewMode =
+      normalizedConfig.reviewMode === ReviewMode.Incremental
+        ? normalizedConfig.reviewMode
+        : ReviewMode.Incremental
+    normalizedConfig.filterMode = Object.values(FilterMode).includes(normalizedConfig.filterMode)
+      ? normalizedConfig.filterMode
+      : FilterMode.Notebook
+    normalizedConfig.rootId = typeof normalizedConfig.rootId === "string" ? normalizedConfig.rootId : ""
+    normalizedConfig.rootDocTitle =
+      typeof normalizedConfig.rootDocTitle === "string" ? normalizedConfig.rootDocTitle : ""
+    normalizedConfig.tags = Array.isArray(normalizedConfig.tags)
+      ? normalizedConfig.tags
+          .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
+          .filter((tag) => tag.length > 0)
+      : typeof normalizedConfig.tags === "string"
+        ? normalizedConfig.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag.length > 0)
+        : []
+    normalizedConfig.filterHistory = Array.isArray(normalizedConfig.filterHistory)
+      ? normalizedConfig.filterHistory
+      : []
+    normalizedConfig.incrementalConfigId =
+      typeof normalizedConfig.incrementalConfigId === "string" &&
+      normalizedConfig.incrementalConfigId.trim().length > 0
+        ? normalizedConfig.incrementalConfigId.trim()
+        : defaultConfig.incrementalConfigId
+    normalizedConfig.excludeVisited = normalizedConfig.excludeVisited !== false
+    normalizedConfig.recentAnchorCount = Math.max(
+      1,
+      this.clampNumber(normalizedConfig.recentAnchorCount, defaultConfig.recentAnchorCount)
+    )
+    normalizedConfig.topAnchorCount = Math.max(
+      1,
+      this.clampNumber(normalizedConfig.topAnchorCount, defaultConfig.topAnchorCount)
+    )
+    normalizedConfig.recommendTopK = Math.max(
+      1,
+      this.clampNumber(normalizedConfig.recommendTopK, defaultConfig.recommendTopK)
+    )
+    normalizedConfig.recommendMaxCandidates = Math.max(
+      1,
+      this.clampNumber(normalizedConfig.recommendMaxCandidates, defaultConfig.recommendMaxCandidates)
+    )
+    normalizedConfig.recommendMaxParagraphs = Math.max(
+      1,
+      this.clampNumber(normalizedConfig.recommendMaxParagraphs, defaultConfig.recommendMaxParagraphs)
+    )
+    normalizedConfig.autoAlignRecommendationPriority = normalizedConfig.autoAlignRecommendationPriority === true
+    normalizedConfig.autoResetOnStartup = normalizedConfig.autoResetOnStartup === true
+    normalizedConfig.enableDebugLog = normalizedConfig.enableDebugLog === true
+    normalizedConfig.autoReloadWhenEmpty = normalizedConfig.autoReloadWhenEmpty === true
+    normalizedConfig.absolutePriorityProb = this.clampNumber(
+      normalizedConfig.absolutePriorityProb,
+      defaultConfig.absolutePriorityProb,
+      0,
+      1
+    )
+
+    return normalizedConfig
+  }
+
+  public normalizeIncrementalConfig(rawConfig: unknown) {
+    const normalizedConfig = new IncrementalConfig()
+    if (!this.isPlainObject(rawConfig) || !Array.isArray(rawConfig.metrics)) {
+      return normalizedConfig
+    }
+
+    const seenMetricIds = new Set<string>()
+    const metrics = rawConfig.metrics
+      .map((metric, index) => this.normalizeMetric(metric, index))
+      .filter((metric): metric is Metric => {
+        if (!metric || seenMetricIds.has(metric.id)) {
+          return false
+        }
+        seenMetricIds.add(metric.id)
+        return true
+      })
+
+    if (metrics.length > 0) {
+      normalizedConfig.metrics = metrics
+    }
+
+    return normalizedConfig
+  }
+
+  public async safeLoadWithDefault<T>(
+    storageName: string | undefined,
+    createDefault: () => T,
+    fallbackName?: string
+  ) {
+    const resolvedStorageName = this.resolveStorageName(storageName, fallbackName)
+
+    try {
+      const storeConfig = await this.loadData(resolvedStorageName)
+      if (storeConfig === null || storeConfig === undefined) {
+        return createDefault()
+      }
+      return storeConfig as T
+    } catch (error) {
+      this.baseLogger.warn(`Load data failed for ${resolvedStorageName}, using default config`, error)
+      return createDefault()
+    }
+  }
+
+  public async loadMainConfig() {
+    const rawConfig = await this.safeLoadWithDefault(storeName, () => new RandomDocConfig(), storeName)
+    const normalizedConfig = this.normalizeMainConfig(rawConfig)
+
+    if (this.hasMeaningfulConfigChanges(rawConfig, normalizedConfig)) {
+      try {
+        await this.saveData(storeName, normalizedConfig)
+      } catch (error) {
+        this.baseLogger.warn("Persist normalized main config failed", error)
+      }
+    }
+
+    return normalizedConfig
+  }
+
+  public async saveMainConfig(config: unknown) {
+    const normalizedConfig = this.normalizeMainConfig(config)
+    await this.saveData(storeName, normalizedConfig)
+    return normalizedConfig
+  }
+
+  public async loadIncrementalConfig(storageName?: string) {
+    const defaultStorageName = new RandomDocConfig().incrementalConfigId
+    const resolvedStorageName = this.resolveStorageName(storageName, defaultStorageName)
+    const rawConfig = await this.safeLoadWithDefault(
+      resolvedStorageName,
+      () => new IncrementalConfig(),
+      defaultStorageName
+    )
+    const normalizedConfig = this.normalizeIncrementalConfig(rawConfig)
+
+    if (this.hasMeaningfulConfigChanges(rawConfig, { metrics: normalizedConfig.metrics })) {
+      try {
+        await this.saveData(resolvedStorageName, { metrics: normalizedConfig.metrics })
+      } catch (error) {
+        this.baseLogger.warn(`Persist normalized incremental config failed for ${resolvedStorageName}`, error)
+      }
+    }
+
+    return normalizedConfig
+  }
+
+  public async saveIncrementalConfig(storageName: string | undefined, config: unknown) {
+    const defaultStorageName = new RandomDocConfig().incrementalConfigId
+    const resolvedStorageName = this.resolveStorageName(storageName, defaultStorageName)
+    const normalizedConfig = this.normalizeIncrementalConfig(config)
+    await this.saveData(resolvedStorageName, { metrics: normalizedConfig.metrics })
+    return normalizedConfig
   }
 
   public setDebugLogEnabled(enabled: boolean) {

@@ -517,7 +517,7 @@
    */
   export const doIncrementalRandomDoc = async () => {
     // 每次漫游前强制刷新配置，确保概率配置为最新
-    storeConfig = await pluginInstance.safeLoad(storeName)
+    storeConfig = await pluginInstance.loadMainConfig()
     
     // 🎯 关键修复：SQL筛选模式下如果没有SQL查询语句，不执行漫游
     if (storeConfig.filterMode === FilterMode.SQL && (!storeConfig.sqlQuery || storeConfig.sqlQuery.trim() === '')) {
@@ -2052,7 +2052,7 @@ const initEditableContent = async () => {
   // lifecycle
   onMount(async () => {
     // 读取配置
-    storeConfig = await pluginInstance.safeLoad(storeName)
+    storeConfig = await pluginInstance.loadMainConfig()
 
     // 根据配置设置默认锁定状态
     if (storeConfig?.defaultLocked) {
