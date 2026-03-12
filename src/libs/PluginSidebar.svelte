@@ -5,6 +5,7 @@
 
 <script lang="ts">
   import { onMount } from "svelte"
+  import * as SiyuanApi from "siyuan"
   import { openMobileFileById, openTab, showMessage } from "siyuan"
   import RandomDocPlugin from "../index"
   import { storeName } from "../Constants"
@@ -13,6 +14,7 @@
   import RecommendationService, { buildRecommendationConfig } from "../service/RecommendationService"
   import { showSettingMenu } from "../topbar"
   import { icons } from "../utils/svg"
+  import PageUtil from "../utils/pageUtil"
   import MetricsPanel from "./MetricsPanel.svelte"
   import PriorityBarChart from "./PriorityBarChart.svelte"
   import type { Metric } from "../models/IncrementalConfig"
@@ -76,6 +78,7 @@
   let visitedDocs: Array<{ id: string; content: string; lastTime?: string }> = []
   let roamingCountList: Array<{ id: string; title: string; roamingCount: number }> = []
   let roamingCountLoading = false
+  let activeDocActionLoading = false
   const readNumberInput = (event: Event) => parseFloat((event.target as HTMLInputElement).value)
   let showSqlExamples = false
   let sqlExamples: Array<{ title: string; sql: string }> = []
@@ -1056,6 +1059,30 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     return openTab({ app: pluginInstance.app, doc: { id: docId } })
   }
 
+  const extractDocIdFromActiveEditor = (editor: any): string => {
+    const protyle = editor?.protyle ?? editor
+    return protyle?.block?.rootID || protyle?.block?.id || ""
+  }
+
+  const getCurrentActiveDocId = (): string => {
+    try {
+      // Official SiYuan plugin API: getActiveEditor() -> protyle.block.rootID
+      const getActiveEditor = (SiyuanApi as any).getActiveEditor
+      if (typeof getActiveEditor === "function") {
+        const editor = getActiveEditor(true) || getActiveEditor(false)
+        const activeDocId = extractDocIdFromActiveEditor(editor)
+        if (activeDocId) {
+          return activeDocId
+        }
+      }
+    } catch (error) {
+      pluginInstance.logger.error("通过 getActiveEditor 获取当前文档 ID 失败", error)
+    }
+
+    // Compatibility fallback for older Siyuan APIs.
+    return PageUtil.getPageIdSync()
+  }
+
   const openRecommendationDoc = async (docId: string) => {
     try {
       const reviewer = await ensureReviewer()
@@ -1080,6 +1107,23 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     } catch (error: any) {
       pluginInstance.logger.error("打开推荐文档失败", error)
       showMessage("打开推荐文档失败: " + (error?.message || error), 3000, "error")
+    }
+  }
+
+  const showMetricsForCurrentActiveDoc = async () => {
+    if (isLoading || activeDocActionLoading) {
+      return
+    }
+    const activeDocId = getCurrentActiveDocId()
+    if (!activeDocId) {
+      showMessage("未找到当前激活的文档，请先打开一个文档", 3000, "error")
+      return
+    }
+    activeDocActionLoading = true
+    try {
+      await openRecommendationDoc(activeDocId)
+    } finally {
+      activeDocActionLoading = false
     }
   }
 
@@ -1466,13 +1510,26 @@ const sortHistory = (items: FilterHistoryItem[]) =>
       </div>
 
       <div class="action-section">
-        <button class="primary-button" on:click={doIncrementalRandomDoc} disabled={isLoading}>
+        <div class="action-buttons-row">
+          <button class="primary-button" on:click={doIncrementalRandomDoc} disabled={isLoading || activeDocActionLoading}>
           {#if isLoading}
             <span class="loading-spinner"></span> 漫游中...
           {:else}
             继续漫游
           {/if}
-        </button>
+          </button>
+          <button
+            class="secondary-button current-doc-metrics-button"
+            on:click={showMetricsForCurrentActiveDoc}
+            disabled={isLoading || activeDocActionLoading}
+          >
+            {#if activeDocActionLoading}
+              <span class="loading-spinner"></span> 加载中...
+            {:else}
+              漫游当前打开的文档
+            {/if}
+          </button>
+        </div>
       </div>
 
       <div class="section recommendation-section">
@@ -2272,6 +2329,24 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .action-buttons-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .action-buttons-row .primary-button,
+  .action-buttons-row .secondary-button {
+    width: auto;
+    flex: 1;
+  }
+
+  .current-doc-metrics-button {
+    font-size: 13px;
+    line-height: 1.3;
+    text-align: center;
   }
 
   .primary-button {

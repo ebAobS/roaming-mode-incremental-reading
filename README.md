@@ -44,7 +44,7 @@
     </style>
     <div style="text-align: center; padding: 2em; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px;">
         <h1 style="color: white; margin: 0; font-size: 2.2em;">📚 Roaming Mode Incremental Reading</h1>
-        <div style="color: rgba(255,255,255,0.9); margin-top: 0.5em; font-size: 1.1em;">An incremental reading plugin powered by intelligent recommendation algorithms, delivering a stress-free "read later" learning experience</div>
+        <div style="color: rgba(255,255,255,0.9); margin-top: 0.5em; font-size: 1.1em;">渐进阅读完整步骤是：<br/>1 选择文档<br/>2 阅读，处理文档<br/>3 制作闪卡并记忆<br/>本插件专注第一步，不涉及第二步和第三步<br/><br/>旨在实现：<br/>随意，科学，快速地“刷文档”，新鲜度随时在线</div>
         <div style="margin-top: 1.5em; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
             <a href="https://github.com/ebAobS/roaming-mode-incremental-reading/blob/main/CHANGELOG.md"
                style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border-radius: 6px; text-decoration: none; font-size: 0.9em;">🗓 Changelog</a>
