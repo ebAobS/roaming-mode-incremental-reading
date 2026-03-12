@@ -38,6 +38,11 @@
   export let totalPriority: number = 0
   export let docPriority: { [key: string]: number } = {}
   export let forceExpanded: boolean = false  // 强制展开模式，用于移动端弹窗 - 移动端空间有限，弹窗内默认展开
+  export let roamingDocTitle: string = "-"
+  export let roamingMode: string = "-"
+  export let roamingProbability: string = "-"
+  export let visitedDocCount: number = 0
+  export let remainingDocCount: number = 0
 
   // state
   let docMetrics: Map<string, number> = new Map()
@@ -503,11 +508,26 @@
   <!-- 漫游次数显示 -->
   {#if !isLoading && !errorMessage}
     <div class="roaming-count-section">
+      <div class="roaming-last roaming-doc" title="展卷乃无言的情意，也是命中注定的机遇，穿越星辰大海来见你，三秋霜雪印马蹄。">
+        当前漫游文档：{roamingDocTitle}
+      </div>
+      <div class="roaming-last">
+        漫游方式：{roamingMode}
+      </div>
+      <div class="roaming-last">
+        漫游概率：{roamingProbability}
+      </div>
       <div class="roaming-count">
         漫游次数：{roamingCount}
       </div>
       <div class="roaming-last">
-        上次访问：{roamingLastTime}
+        上次漫游时间：{roamingLastTime}
+      </div>
+      <div class="roaming-last">
+        已漫游文档：{visitedDocCount}
+      </div>
+      <div class="roaming-last">
+        剩余需漫游文档：{remainingDocCount}
       </div>
     </div>
   {/if}
@@ -635,8 +655,9 @@
     padding-top: 10px;
     border-top: 1px solid var(--b3-border-color);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
   
   .roaming-count {
@@ -650,7 +671,15 @@
     color: var(--b3-theme-on-surface-light);
     font-weight: normal;
   }
-  
+
+  .roaming-doc {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
+  }
+
   .metrics-list {
     margin-bottom: 8px;
   }

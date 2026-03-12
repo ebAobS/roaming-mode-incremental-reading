@@ -31,7 +31,6 @@
 
   let activeTab = 0
   $: currentTabKey = tabs[activeTab]?.key || ""
-  let probabilityTip = "等待漫游，点击下方按钮开始"
   let isLoading = false
   let metricsLoading = false
   let priorityLoading = false
@@ -64,6 +63,13 @@
   let manualInputId = ""
 
   let currentRndId: string | undefined = undefined
+  let currentRoamingDocTitle = "-"
+  let currentRoamingMode = "-"
+  let currentRoamingProbability = "-"
+  let visitedDocCount = 0
+  let remainingDocCount = 0
+  let filteredDocCount = 0
+  let isFilteredDocCountLoading = false
   let docMetrics: Metric[] = []
   let docPriority: { [key: string]: number } = {}
 
@@ -146,10 +152,6 @@
     return `${rootId.slice(0, 8)}...`
   })()
 
-  const setTips = (tip: string) => {
-    probabilityTip = tip
-  }
-
   const switchTab = async (index: number) => {
     activeTab = index
     const key = tabs[index]?.key
@@ -184,6 +186,25 @@
       await pr.initIncrementalConfig()
     }
     return pr
+  }
+
+  const resolveDocTitleFromBlock = (blockResult: any, fallback: string) => {
+    const blockData = (blockResult as any)?.data ?? blockResult
+    return blockData?.content || blockData?.name || blockData?.hPath || fallback
+  }
+
+  const refreshFilteredDocCount = async () => {
+    if (!storeConfig) return
+    isFilteredDocCountLoading = true
+    try {
+      const reviewer = await ensureReviewer()
+      filteredDocCount = await reviewer.getTotalDocCount(storeConfig)
+    } catch (error) {
+      pluginInstance.logger.error("获取筛选文档数量失败", error)
+      filteredDocCount = 0
+    } finally {
+      isFilteredDocCountLoading = false
+    }
   }
 
   const ensureRecommendationService = () => {
@@ -535,6 +556,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     if (!skipHistory) {
       await recordFilterHistory(filterMode)
     }
+    await refreshFilteredDocCount()
   }
 
   const toggleNotebook = (notebookId: string) => {
@@ -556,6 +578,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     pr = null
     await ensureReviewer()
     await recordFilterHistory(FilterMode.Notebook)
+    await refreshFilteredDocCount()
   }
 
   const loadAvailableTags = async () => {
@@ -583,6 +606,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     pr = null
     await ensureReviewer()
     await recordFilterHistory(FilterMode.Tag)
+    await refreshFilteredDocCount()
   }
 
   const clearAllTags = async () => {
@@ -593,6 +617,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     pr = null
     await ensureReviewer()
     await recordFilterHistory(FilterMode.Tag)
+    await refreshFilteredDocCount()
   }
 
   const applySqlQuery = async () => {
@@ -601,6 +626,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     pr = null
     await ensureReviewer()
     await recordFilterHistory(FilterMode.SQL)
+    await refreshFilteredDocCount()
     showMessage("已应用 SQL 筛选条件", 2000, "info")
   }
 
@@ -747,6 +773,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     pr = null
     await ensureReviewer()
     await recordFilterHistory(FilterMode.Root)
+    await refreshFilteredDocCount()
   }
 
   const switchToManualInput = () => {
@@ -1087,12 +1114,21 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     try {
       const reviewer = await ensureReviewer()
       currentRndId = docId
+      const blockResult = await pluginInstance.kernelApi.getBlockByID(docId)
+      currentRoamingDocTitle = resolveDocTitleFromBlock(blockResult, docId)
+      currentRoamingMode = "手动漫游"
+      currentRoamingProbability = "无"
       if (storeConfig) {
         ;(storeConfig as any).currentRndId = docId
         await pluginInstance.saveData(storeName, storeConfig)
       }
       await refreshCurrentDocMetrics()
       await reviewer.recordVisitAndRoam(docId)
+      const total = await reviewer.getTotalDocCount(storeConfig)
+      const visitedCount = await reviewer.getVisitedCount(storeConfig)
+      filteredDocCount = total
+      visitedDocCount = visitedCount
+      remainingDocCount = Math.max(total - visitedCount, 0)
       await refreshPriorityBarPoints()
       if (currentTabKey === "priority") {
         await loadPriorityList()
@@ -1143,6 +1179,9 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     try {
       const total = await reviewer.getTotalDocCount(storeConfig)
       if (total === 0) {
+        filteredDocCount = 0
+        visitedDocCount = 0
+        remainingDocCount = 0
         showMessage("没有符合条件的文档，请先准备文档后再试", 3000, "info")
         return
       }
@@ -1182,21 +1221,12 @@ const sortHistory = (items: FilterHistoryItem[]) =>
 
       const visitedCount = await reviewer.getVisitedCount(storeConfig)
       const remainingCount = total - visitedCount
-      if (isAbsolutePriority) {
-        let rankText = "未知"
-        try {
-          const priorityData = await reviewer.getPriorityList(storeConfig)
-          const rank = priorityData.findIndex((doc) => doc.id === currentRndId)
-          if (rank !== -1) {
-            rankText = (rank + 1).toString()
-          }
-        } catch (error) {
-          pluginInstance.logger.error("获取优先级位次失败", error)
-        }
-        setTips(`展卷乃无言的情意：缘自优先级第${rankText}的顺序，穿越星辰遇见你，三秋霜雪印马蹄。${total}篇文档已剩${remainingCount}`)
-      } else {
-        setTips(`展卷乃无言的情意：以${selectionProbability}的机遇，穿越星辰遇见你，三秋霜雪印马蹄。${total}篇文档已剩${remainingCount}`)
-      }
+      currentRoamingDocTitle = resolveDocTitleFromBlock(blockResult, currentRndId)
+      currentRoamingMode = isAbsolutePriority ? "绝对优先级" : "优先级概率"
+      currentRoamingProbability = isAbsolutePriority ? "无" : selectionProbability
+      visitedDocCount = visitedCount
+      remainingDocCount = Math.max(remainingCount, 0)
+      filteredDocCount = total
 
       if (storeConfig) {
         ;(storeConfig as any).currentRndId = currentRndId
@@ -1280,6 +1310,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
         const blockResult = await pluginInstance.kernelApi.getBlockByID(savedDocId)
         if (blockResult) {
           currentRndId = savedDocId
+          currentRoamingDocTitle = resolveDocTitleFromBlock(blockResult, savedDocId)
           await refreshCurrentDocMetrics()
           await refreshPriorityBarPoints()
         } else {
@@ -1291,6 +1322,10 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     await loadFilterHistory()
     await loadSqlExamples()
     await refreshRecommendations()
+    await refreshFilteredDocCount()
+    const reviewer = await ensureReviewer()
+    visitedDocCount = await reviewer.getVisitedCount(storeConfig)
+    remainingDocCount = Math.max(filteredDocCount - visitedDocCount, 0)
   })
 </script>
 
@@ -1314,14 +1349,11 @@ const sortHistory = (items: FilterHistoryItem[]) =>
 
   <div class="tab-panels">
     {#if currentTabKey === "filters"}
-      <div class="tip-banner">
-        <div class="tip-icon">✨</div>
-      <div class="tip-text">{probabilityTip}</div>
-    </div>
-
     <div class="section filter-section">
       <div class="section-header">
-        <div class="section-title filter-section-title">筛选文档</div>
+        <div class="section-title filter-section-title" title="将从筛选后的文档范围中漫游">
+          筛选文档：{isFilteredDocCountLoading ? "..." : filteredDocCount}
+        </div>
         <div class="section-actions">
           <button class="history-button" on:click={() => (showFilterHistory = !showFilterHistory)}>筛选历史</button>
         </div>
@@ -1501,6 +1533,11 @@ const sortHistory = (items: FilterHistoryItem[]) =>
             reviewer={pr}
             metrics={docMetrics}
             {docPriority}
+            roamingDocTitle={currentRoamingDocTitle}
+            roamingMode={currentRoamingMode}
+            roamingProbability={currentRoamingProbability}
+            visitedDocCount={visitedDocCount}
+            remainingDocCount={remainingDocCount}
           />
         {:else if metricsLoading}
           <div class="placeholder">正在加载指标...</div>
@@ -1915,21 +1952,6 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     display: flex;
     flex-direction: column;
     gap: 12px;
-  }
-
-  .tip-banner {
-    display: flex;
-    gap: 8px;
-    background: var(--b3-theme-primary-lightest, rgba(60, 120, 255, 0.1));
-    border: 1px solid var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-    padding: 10px 12px;
-    border-radius: 6px;
-    align-items: center;
-  }
-
-  .tip-icon {
-    font-size: 18px;
   }
 
   .section {
