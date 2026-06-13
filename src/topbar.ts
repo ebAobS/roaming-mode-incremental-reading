@@ -7,6 +7,12 @@ import { icons } from "./utils/svg"
 import { Dialog, showMessage } from "siyuan"
 import RandomDocSetting from "./libs/RandomDocSetting.svelte"
 
+const openSidebar = (pluginInstance: RandomDocPlugin) => {
+  const dockType = `${pluginInstance.name}plugin_sidebar`
+  const dockItem = document.querySelector(`span[data-type="${dockType}"]`) as HTMLElement | null
+  dockItem?.click()
+}
+
 export async function initTopbar(pluginInstance: RandomDocPlugin) {
   const topBarElement = pluginInstance.addTopBar({
     icon: icons.iconTopbar,
@@ -15,12 +21,8 @@ export async function initTopbar(pluginInstance: RandomDocPlugin) {
     callback: () => {},
   })
 
-  topBarElement.addEventListener("click", async () => {
-    if (pluginInstance.dockContentInstance?.triggerRoam) {
-      pluginInstance.dockContentInstance.triggerRoam()
-    } else {
-      showMessage("侧边栏未就绪，请稍后重试", 3000, "error")
-    }
+  topBarElement.addEventListener("click", () => {
+    openSidebar(pluginInstance)
   })
 
   topBarElement.addEventListener("contextmenu", () => {
@@ -61,11 +63,7 @@ export async function registerCommand(pluginInstance: RandomDocPlugin) {
     langKey: "startRandomDoc",
     hotkey: "⌥⌘M",
     callback: async () => {
-      if (pluginInstance.dockContentInstance?.triggerRoam) {
-        pluginInstance.dockContentInstance.triggerRoam()
-      } else {
-        showMessage("侧边栏未就绪，请稍后重试", 3000, "error")
-      }
+      pluginInstance.dockContentInstance?.triggerRoam?.()
     },
   })
 
@@ -73,11 +71,7 @@ export async function registerCommand(pluginInstance: RandomDocPlugin) {
     langKey: "continueRandomDoc",
     hotkey: "⌥⌘C",
     callback: async () => {
-      if (pluginInstance.dockContentInstance?.triggerRoam) {
-        pluginInstance.dockContentInstance.triggerRoam()
-      } else {
-        showMessage("侧边栏未就绪，请稍后重试", 3000, "error")
-      }
+      pluginInstance.dockContentInstance?.triggerRoam?.()
     },
   })
 
