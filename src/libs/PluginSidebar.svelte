@@ -4,7 +4,7 @@
 -->
 
 <script lang="ts">
-  import { onMount } from "svelte"
+  import { onDestroy, onMount } from "svelte"
   import * as SiyuanApi from "siyuan"
   import { openMobileFileById, openTab, showMessage } from "siyuan"
   import RandomDocPlugin from "../index"
@@ -12,6 +12,9 @@
   import RandomDocConfig, { FilterMode, ReviewMode } from "../models/RandomDocConfig"
   import IncrementalReviewer from "../service/IncrementalReviewer"
   import RecommendationService, { buildRecommendationConfig } from "../service/RecommendationService"
+  import WorkspaceWordCountService, {
+    type WorkspaceWordCountSnapshot,
+  } from "../service/WorkspaceWordCountService"
   import { showSettingMenu } from "../topbar"
   import { icons } from "../utils/svg"
   import PageUtil from "../utils/pageUtil"
@@ -72,6 +75,15 @@
   let isFilteredDocCountLoading = false
   let docMetrics: Metric[] = []
   let docPriority: { [key: string]: number } = {}
+
+  const workspaceWordCountService = new WorkspaceWordCountService(pluginInstance)
+  let workspaceWordCount: WorkspaceWordCountSnapshot | null = null
+  let workspaceWordCountInitialLoading = true
+  let workspaceWordCountRefreshing = false
+  let workspaceWordCountQueued = false
+  let workspaceWordCountDestroyed = false
+  let workspaceWordCountTimer: ReturnType<typeof setTimeout> | null = null
+  let workspaceWordCountInterval: ReturnType<typeof setInterval> | null = null
 
   let priorityBarPoints: Array<{ id: string; title?: string; priority: number }> = []
   let priorityBarMin = 0
@@ -205,6 +217,98 @@
     } finally {
       isFilteredDocCountLoading = false
     }
+  }
+
+  const refreshWorkspaceWordCount = async (): Promise<void> => {
+    if (workspaceWordCountDestroyed) return
+    if (workspaceWordCountRefreshing) {
+      workspaceWordCountQueued = true
+      return
+    }
+
+    workspaceWordCountRefreshing = true
+    try {
+      const snapshot = await workspaceWordCountService.getSnapshot()
+      if (!workspaceWordCountDestroyed) {
+        workspaceWordCount = snapshot
+      }
+    } catch (error) {
+      if (!workspaceWordCountDestroyed) {
+        pluginInstance.logger.error("统计工作空间总字数失败", error)
+      }
+    } finally {
+      workspaceWordCountRefreshing = false
+      if (workspaceWordCountDestroyed) return
+
+      workspaceWordCountInitialLoading = false
+      if (workspaceWordCountQueued) {
+        workspaceWordCountQueued = false
+        void refreshWorkspaceWordCount()
+      }
+    }
+  }
+
+  const scheduleWorkspaceWordCountRefresh = (delay = 1500) => {
+    if (workspaceWordCountDestroyed) return
+    if (workspaceWordCountTimer) {
+      clearTimeout(workspaceWordCountTimer)
+    }
+    workspaceWordCountTimer = setTimeout(() => {
+      workspaceWordCountTimer = null
+      void refreshWorkspaceWordCount()
+    }, delay)
+  }
+
+  const isWorkspaceContentChange = (command: string) => {
+    const normalized = command.toLowerCase()
+    return (
+      normalized === "transactions" ||
+      (normalized.includes("doc") && ["create", "remove", "rename", "move"].some((action) => normalized.includes(action)))
+    )
+  }
+
+  const handleWorkspaceWordCountEvent = (event: CustomEvent<SiyuanApi.IWebSocketData>) => {
+    const command = event.detail?.cmd
+    if (typeof command === "string" && isWorkspaceContentChange(command)) {
+      scheduleWorkspaceWordCountRefresh()
+    }
+  }
+
+  const handleWorkspaceVisibilityChange = () => {
+    if (!document.hidden) {
+      scheduleWorkspaceWordCountRefresh(0)
+    }
+  }
+
+  const handleWorkspaceFocus = () => {
+    scheduleWorkspaceWordCountRefresh(0)
+  }
+
+  const setupWorkspaceWordCountRefresh = () => {
+    void refreshWorkspaceWordCount()
+    pluginInstance.eventBus.on("ws-main", handleWorkspaceWordCountEvent)
+    document.addEventListener("visibilitychange", handleWorkspaceVisibilityChange)
+    window.addEventListener("focus", handleWorkspaceFocus)
+    workspaceWordCountInterval = setInterval(() => {
+      if (!document.hidden) {
+        void refreshWorkspaceWordCount()
+      }
+    }, 60000)
+  }
+
+  const formatFullWordCount = (value?: number) => {
+    return typeof value === "number" ? value.toLocaleString("zh-CN") : "—"
+  }
+
+  const formatWorkspaceWordCount = (value: number | undefined, loading: boolean) => {
+    if (typeof value !== "number") return loading ? "..." : "—"
+    if (value >= 100000000) {
+      return `${(value / 100000000).toFixed(1).replace(/\.0$/, "")}亿`
+    }
+    if (value >= 10000) {
+      return `${(value / 10000).toFixed(1).replace(/\.0$/, "")}万`
+    }
+    return value.toLocaleString("zh-CN")
   }
 
   const ensureRecommendationService = () => {
@@ -1264,6 +1368,7 @@ const sortHistory = (items: FilterHistoryItem[]) =>
   }
 
   onMount(async () => {
+    setupWorkspaceWordCountRefresh()
     storeConfig = await pluginInstance.loadMainConfig()
     if (!storeConfig.reviewMode) {
       storeConfig.reviewMode = ReviewMode.Incremental
@@ -1327,12 +1432,39 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     visitedDocCount = await reviewer.getVisitedCount(storeConfig)
     remainingDocCount = Math.max(filteredDocCount - visitedDocCount, 0)
   })
+
+  onDestroy(() => {
+    workspaceWordCountDestroyed = true
+    workspaceWordCountQueued = false
+    if (workspaceWordCountTimer) {
+      clearTimeout(workspaceWordCountTimer)
+      workspaceWordCountTimer = null
+    }
+    if (workspaceWordCountInterval) {
+      clearInterval(workspaceWordCountInterval)
+      workspaceWordCountInterval = null
+    }
+    pluginInstance.eventBus.off("ws-main", handleWorkspaceWordCountEvent)
+    document.removeEventListener("visibilitychange", handleWorkspaceVisibilityChange)
+    window.removeEventListener("focus", handleWorkspaceFocus)
+  })
 </script>
 
 <div class="plugin-sidebar">
   <div class="sidebar-header">
     <div class="title-group">
       <div class="title">{pluginInstance.i18n.sidebarTitle || "漫游面板"}</div>
+    </div>
+    <div class="workspace-word-count" aria-label="工作空间总字数">
+      <span class="word-count-item" title={`now: ${formatFullWordCount(workspaceWordCount?.now)}`}>
+        now: <span class="word-count-value">{formatWorkspaceWordCount(workspaceWordCount?.now, workspaceWordCountInitialLoading)}</span>
+      </span>
+      <span class="word-count-item" title={`近7天: ${formatFullWordCount(workspaceWordCount?.sevenDayPeak)}`}>
+        近7天: <span class="word-count-value">{formatWorkspaceWordCount(workspaceWordCount?.sevenDayPeak, workspaceWordCountInitialLoading)}</span>
+      </span>
+      <span class="word-count-item" title={`近1月: ${formatFullWordCount(workspaceWordCount?.thirtyDayPeak)}`}>
+        近1月: <span class="word-count-value">{formatWorkspaceWordCount(workspaceWordCount?.thirtyDayPeak, workspaceWordCountInitialLoading)}</span>
+      </span>
     </div>
     <div class="header-actions">
       <button class="icon-btn" on:click={() => showSettingMenu(pluginInstance)} title={pluginInstance.i18n.setting}>
@@ -1875,14 +2007,17 @@ const sortHistory = (items: FilterHistoryItem[]) =>
     display: flex;
     flex-direction: column;
     height: 100%;
+    container-type: inline-size;
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
   }
 
   .sidebar-header {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 6px;
     padding: 12px 16px;
     border-bottom: 1px solid var(--b3-theme-border);
     flex-shrink: 0;
@@ -1890,13 +2025,41 @@ const sortHistory = (items: FilterHistoryItem[]) =>
 
   .title-group {
     display: flex;
+    flex: 0 1 auto;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
   }
 
   .title {
+    overflow: hidden;
     font-size: 16px;
     font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .workspace-word-count {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 2px 8px;
+    min-width: 0;
+    color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .word-count-item {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .word-count-value {
+    color: var(--b3-theme-on-surface);
+    font-weight: 500;
   }
 
   .subtitle {
@@ -1906,7 +2069,19 @@ const sortHistory = (items: FilterHistoryItem[]) =>
 
   .header-actions {
     display: flex;
+    flex-shrink: 0;
     gap: 8px;
+  }
+
+  @container (max-width: 460px) {
+    .workspace-word-count {
+      flex-basis: 100%;
+      order: 3;
+    }
+
+    .header-actions {
+      margin-left: auto;
+    }
   }
 
   .icon-btn {

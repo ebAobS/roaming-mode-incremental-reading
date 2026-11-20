@@ -44,6 +44,55 @@ class KernelApi extends BaseApi {
   }
 
   /**
+   * 使用思源原生统计口径计算当前工作空间全部文档的总字数
+   */
+  public async getWorkspaceWordCount(): Promise<number> {
+    const pageSize = 1000
+    const docIds: string[] = []
+    const seenDocIds = new Set<string>()
+
+    // 未显式 LIMIT 时思源会按搜索条数截断结果，必须分页获取全部文档
+    for (let pageOffset = 0; ; pageOffset += pageSize) {
+      const result = await this.sql(
+        `SELECT id FROM blocks WHERE type = 'd' ORDER BY id LIMIT ${pageSize} OFFSET ${pageOffset}`
+      )
+      if (result.code !== 0) {
+        throw new Error(result.msg || "查询工作空间文档失败")
+      }
+
+      const rows = (result.data as any[]) || []
+      for (const row of rows) {
+        const id = row?.id
+        if (typeof id === "string" && id.length > 0 && !seenDocIds.has(id)) {
+          seenDocIds.add(id)
+          docIds.push(id)
+        }
+      }
+      if (rows.length < pageSize) break
+    }
+
+    const batchSize = 200
+    let total = 0
+
+    for (let offset = 0; offset < docIds.length; offset += batchSize) {
+      const ids = docIds.slice(offset, offset + batchSize)
+      const response = await this.siyuanRequest("/api/block/getBlocksWordCount", { ids })
+      if (response.code !== 0) {
+        throw new Error(response.msg || "统计工作空间字数失败")
+      }
+
+      const data = response.data as any
+      const batchWordCount = Number(data?.stat?.wordCount ?? data?.wordCount)
+      if (!Number.isFinite(batchWordCount) || batchWordCount < 0) {
+        throw new Error("思源返回了无效的工作空间字数")
+      }
+      total += batchWordCount
+    }
+
+    return total
+  }
+
+  /**
    * 分页获取根文档
    *
    * @param keyword - 关键字
